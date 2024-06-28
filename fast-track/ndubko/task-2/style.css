@@ -1,0 +1,19 @@
+:root {
+    --violet: #b6a4ff;
+    --green: #2ae881;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.rect {
+    width: 512px;
+    height: 512px;
+    background: var(--green);
+    background-image: radial-gradient(circle at 0 0, var(--violet) 40%, transparent 40%),
+        radial-gradient(circle at 100% 0, var(--violet) 20%, transparent 20%),
+        radial-gradient(circle at 100% 100%, var(--violet) 40%, transparent 40%),
+        radial-gradient(circle at 0 100%, var(--violet) 20%, transparent 20%);
+}

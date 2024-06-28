@@ -1,0 +1,56 @@
+:root {
+    --red: #ff0000;
+    --size: 233px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.rect {
+    width: 512px;
+    height: 512px;
+    position: relative;
+    box-sizing: border-box;
+}
+.heart__wrapper {
+    position: absolute;
+    box-sizing: border-box;
+    left: 256px;
+    top: 256px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: var(--size);
+    height: var(--size);
+}
+
+.heart {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    background-color: var(--red);
+    position: relative;
+}
+.heart::after {
+    content: "";
+    box-sizing: border-box;
+    position: absolute;
+    left: 0;
+    height: 100%;
+    width: 50%;
+    transform: translate(-100%, 0);
+    background-color: var(--red);
+    border-radius: 512px 0 0 512px;
+}
+
+.heart::before {
+    content: "";
+    box-sizing: border-box;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 50%;
+    transform: translate(0, -100%);
+    background-color: var(--red);
+    border-radius: 512px 512px 0 0;
+}

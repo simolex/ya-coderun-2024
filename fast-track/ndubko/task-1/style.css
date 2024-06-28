@@ -1,0 +1,19 @@
+:root {
+    --violet: #b6a4ff;
+    --green: #2ae881;
+}
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.rect {
+    width: 512px;
+    height: 512px;
+    box-sizing: border-box;
+    background-color: var(--violet);
+
+    border: 256px solid transparent;
+    border-top: 256px solid var(--green);
+    border-right: 256px solid var(--green);
+}
