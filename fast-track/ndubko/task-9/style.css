@@ -1,0 +1,36 @@
+:root {
+    --color-black: #000000;
+    --color-white: #ffffff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+.sq {
+    box-sizing: border-box;
+}
+
+.sq_1 {
+    width: 512px;
+    height: 512px;
+    position: relative;
+    border: 106px solid var(--color-black);
+}
+.sq_2 {
+    width: 100%;
+    height: 100%;
+    border: 44px solid var(--color-white);
+    background-color: var(--color-black);
+}
+.sq_r {
+    width: 299px;
+    height: 299px;
+    border: 44px solid var(--color-white);
+    background-color: var(--color-black);
+    position: absolute;
+    transform: translate(-50%, -50%) rotate(45deg);
+    left: 50%;
+    top: 50%;
+    mix-blend-mode: difference;
+}

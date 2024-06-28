@@ -1,0 +1,13 @@
+:root {
+    --blue: #1e5da2;
+    --red: #df301f;
+    --yellow: #fdcf5a;
+    --black: #000000;
+    --white: #ffffff;
+    --gap: 20px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
