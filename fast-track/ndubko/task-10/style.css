@@ -6,6 +6,7 @@
     --cell-size: 40px;
     --line-width: 8px;
     --line-height: 2px;
+    --hypot-size: 56.57px;
 }
 
 body {
@@ -24,10 +25,59 @@ body {
     height: 480px;
 
     display: grid;
-    grid-template-columns: repeat(12, auto);
-    grid-template-rows: repeat(12, auto);
-    background-color: var(--color-lightgrey);
+    grid-template-columns: repeat(12, var(--cell-size));
+    grid-template-rows: repeat(12, var(--cell-size));
     grid-auto-flow: dense;
+    background-image: repeating-linear-gradient(
+        135deg,
+        var(--color-white) 0 calc(var(--hypot-size) / 4),
+        var(--color-black) calc(var(--hypot-size) / 4) calc(var(--hypot-size) * 3 / 4),
+        var(--color-white) calc(var(--hypot-size) * 3 / 4) calc(var(--hypot-size) * 5 / 4),
+        var(--color-black) calc(var(--hypot-size) * 5 / 4) calc(var(--hypot-size) * 9 / 4),
+        var(--color-white) calc(var(--hypot-size) * 9 / 4) calc(var(--hypot-size) * 11 / 4),
+        var(--color-black) calc(var(--hypot-size) * 11 / 4) calc(var(--hypot-size) * 13 / 4),
+        var(--color-white) calc(var(--hypot-size) * 13 / 4) calc(var(--hypot-size) * 17 / 4),
+        var(--color-black) calc(var(--hypot-size) * 17 / 4) calc(var(--hypot-size) * 19 / 4),
+        var(--color-white) calc(var(--hypot-size) * 19 / 4) calc(var(--hypot-size) * 21 / 4),
+        var(--color-black) calc(var(--hypot-size) * 21 / 4) calc(var(--hypot-size) * 25 / 4),
+        var(--color-white) calc(var(--hypot-size) * 25 / 4) calc(var(--hypot-size) * 27 / 4),
+        var(--color-black) calc(var(--hypot-size) * 27 / 4) calc(var(--hypot-size) * 29 / 4),
+        var(--color-white) calc(var(--hypot-size) * 29 / 4) calc(var(--hypot-size) * 33 / 4),
+        var(--color-black) calc(var(--hypot-size) * 33 / 4) calc(var(--hypot-size) * 35 / 4),
+        var(--color-white) calc(var(--hypot-size) * 35 / 4) calc(var(--hypot-size) * 37 / 4),
+        var(--color-black) calc(var(--hypot-size) * 37 / 4) calc(var(--hypot-size) * 41 / 4),
+        var(--color-white) calc(var(--hypot-size) * 41 / 4) calc(var(--hypot-size) * 43 / 4),
+        var(--color-black) calc(var(--hypot-size) * 43 / 4) calc(var(--hypot-size) * 45 / 4),
+        var(--color-white) calc(var(--hypot-size) * 45 / 4) calc(var(--hypot-size) * 49 / 4)
+    );
+    background-position: -100% -100%;
+}
+
+.rect__block {
+    position: relative;
+    background-clip: content-box;
+    background-color: var(--color-lightgrey);
+    padding: calc(var(--line-height) / 2);
+}
+.rect__block::after {
+    content: "";
+    position: absolute;
+    top: calc(var(--line-width) / 2);
+    left: 0;
+    width: var(--cell-size);
+    height: calc(var(--cell-size) - calc(var(--line-width)));
+    background-color: inherit;
+    z-index: 1;
+}
+.rect__block::before {
+    content: "";
+    position: absolute;
+    top: calc(-1 * var(--line-height) / 2);
+    left: calc(var(--line-width) / 2);
+    height: var(--cell-size);
+    width: calc(var(--cell-size) - calc(var(--line-width)));
+    background-color: inherit;
+    z-index: 2;
 }
 
 .rect__block:nth-child(2n + 1) {
