@@ -1,0 +1,15 @@
+@import url("./_reset.css");
+
+body {
+  padding: 20px;
+}
+
+p {
+  margin-bottom: 40px;
+  font-family: monospace;
+}
+
+img {
+  width: 350px;
+  border-radius: 8px;
+}
