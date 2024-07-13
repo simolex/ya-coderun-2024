@@ -11,9 +11,8 @@ let player = {
     vx: 1,
     vy: 0,
     ax: 0,
-    ay: -0.05,
-}
-
+    ay: -0.05
+};
 
 const platforms = [
     { x: 200, y: 560, width: 50, height: 6, freq: 261.63 },
@@ -32,9 +31,8 @@ const platforms = [
     { x: 200, y: 170, width: 50, height: 6, freq: 440 },
 
     { x: 120, y: 140, width: 50, height: 6, freq: 349.23 },
-    { x: 200, y: 100, width: 50, height: 6, freq: 392 },
-]
-
+    { x: 200, y: 100, width: 50, height: 6, freq: 392 }
+];
 
 function loop() {
     setTimeout(() => {
@@ -43,19 +41,13 @@ function loop() {
     }, 5);
 }
 
-
 function start() {
     audioContext.resume();
     loop();
 }
 
-
 const button = document.querySelector("button");
-button.addEventListener(
-    "click",
-    () => start()
-);
-
+button.addEventListener("click", () => start());
 
 const canvas = document.getElementById("canvas");
 const canvasContext = canvas.getContext("2d");
@@ -66,23 +58,23 @@ const CANVAS_HEIGHT = canvas.clientHeight;
 function render(player, platforms) {
     canvasContext.reset();
 
-    // background   
+    // background
     canvasContext.beginPath();
-    canvasContext.fillStyle = '#eee';
+    canvasContext.fillStyle = "#eee";
     canvasContext.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.fill();
     canvasContext.closePath();
 
     // ball
     canvasContext.beginPath();
-    canvasContext.fillStyle = '#000';
+    canvasContext.fillStyle = "#000";
     canvasContext.arc(player.x, CANVAS_HEIGHT - player.y, 10, 0, Math.PI * 2, true);
     canvasContext.fill();
     canvasContext.closePath();
 
     // metals
     canvasContext.beginPath();
-    canvasContext.fillStyle = '#900';
+    canvasContext.fillStyle = "#900";
     platforms.forEach(({ x, y, width, height }) => {
         canvasContext.rect(x - width / 2, CANVAS_HEIGHT - (y - height / 2), width, height);
         canvasContext.fill();
@@ -90,14 +82,11 @@ function render(player, platforms) {
     canvasContext.closePath();
 }
 
-
 function renderLoop() {
     requestAnimationFrame(() => {
         render(player, platforms);
-        renderLoop()
+        renderLoop();
     });
 }
 
 renderLoop();
-
-
