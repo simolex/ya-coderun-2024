@@ -48,7 +48,7 @@ type TupleSplit<
     T,
     N extends number,
     O extends readonly unknown[] = readonly []
-> = O["length"] extends N
+    > = O["length"] extends N
     ? [O, T]
     : T extends readonly [infer F, ...infer R]
     ? TupleSplit<readonly [...R], N, readonly [...O, F]>
@@ -61,41 +61,43 @@ type SubArray<T, N extends number, M extends number> = PreSubArray<T, N, M>[1] e
     ? PreSubArray<T, N, M>[0]
     : [...PreSubArray<T, N, M>[0], First<PreSubArray<T, N, M>[1]>];
 
+
+type ForByIndex<
+    T extends unknown[],
+    N extends number, M extends number,
+    Result extends readonly unknown[] = readonly []
+    > = T["length"] extends 0
+    ? [...Result]
+    : [...Result, ...SubArray<T, N, M>];
+
 type ForByKey<
     T extends unknown[],
     Key extends string,
     Result extends readonly unknown[] = readonly []
-> = T["length"] extends 0
+    > = T["length"] extends 0
     ? [...Result]
     : T extends [infer Item, ...infer Rest]
     ? Key extends keyof Item
-        ? ForByKey<Rest, Key, [...Result, Item[Key]]>
-        : ForByKey<Rest, Key, [...Result]>
+    ? ForByKey<Rest, Key, [...Result, Item[Key]]>
+    : ForByKey<Rest, Key, [...Result]>
     : [...Result];
 
 type GetFromArray<
     T extends unknown[],
     Path extends string
-> = Path extends `${infer Left}.${infer Right}`
+    > = Path extends `${infer Left}.${infer Right}`
     ? Left extends `(${infer N extends number}-${infer M extends number})`
-        ? SubArray<T, N, M>
-        : GetFromArray<ForByKey<T, Left>, Right>
+    ? ForByIndex<T, N, M>
+    : [...GetFromArray<ForByKey<T, Left>, Right>]
     : Path extends `(${infer N extends number}-${infer M extends number})`
-    ? never
+    ? ForByIndex<T, N, M>
     : ForByKey<T, Path>;
 
+type GenPaths<Path extends string>
+
 type Get<T extends unknown, Path extends string> = GetFromArray<[T], Path>;
-type Get2<T extends unknown, Path extends string> = ForByKey<[T], Path>;
+type Get2<T extends unknown, Path extends string, N extends number, M extends number> = ForByIndex<[T], N, M>;
 
-type a = Get2<typeof celestialBody, "cosmicData">;
+type b = TupleSplit<[typeof celestialBody], 2>;
+type a = TupleSplit<Get<typeof celestialBody, "observations">, 2>;
 
-type celestialName = Get<typeof celestialBody, "cosmicData.name">; // Sirius
-type firstObservationMagnitude = Get<typeof celestialBody, "observations.0.magnitude">; // 1.46
-type observationsMagnitude = Get<typeof celestialBody, "observations.(0-2).magnitude">; // 1.46 | 1.12
-type observationsMagnitude = Get<typeof celestialBody, "observations.1.magnitude">; // 1.46 | 1.12
-type observationInstruments = Get<typeof celestialBody, "observations.1.instrumentUsed">; // "Radio Telescope"
-type spectraDataPoints = Get<typeof celestialBody, "observations.0.spectra.0.dataPoints.(0-3)">; // { frequency: 400 } | { frequency: 500 } | { frequency: 600 }
-type secondDataPointIntensity = Get<
-    typeof celestialBody,
-    "observations.0.spectra.0.dataPoints.1.frequency"
->; // 500
