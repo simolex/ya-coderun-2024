@@ -51,31 +51,11 @@ type Enumerate<N extends number, Acc extends unknown[] = []> = Acc["length"] ext
 
 type IntRange<F extends number, T extends number> = Exclude<Enumerate<T>, Enumerate<F>>;
 
-type UnionPaths<Head extends string, Tail extends string, Indexes> = Indexes extends number
-    ? `${Head}${Indexes}${Tail}`
-    : never;
-
-type GenPaths<Path> = Path extends `${infer Head}(${infer Indexs extends string})${infer Tail}`
+type GenPaths<Path> = Path extends `(${infer Indexs extends string})`
     ? Indexs extends `${infer N extends number}-${infer M extends number}`
-        ? UnionPaths<Head, Tail, IntRange<N, M>>
+        ? IntRange<N, M>
         : Path
     : Path;
-
-type isGen<Path> = Path extends `${infer _}(${infer __})${infer ___}`
-    ? isGen<GenPaths<Path>>
-    : Path;
-
-type w = isGen<"observations.(0-3).magnitude.(0-3)">;
-
-type GetOne<T extends unknown, Path extends string> = Path extends `${infer Left}.${infer Right}`
-    ? Left extends keyof T
-        ? GetOne<T[Left], Right>
-        : never
-    : Path extends keyof T
-    ? T[Path]
-    : never;
-
-type GetAll<T, Path> = Path extends string ? GetOne<T, Path> : never;
 
 type DeepMutable<T> = T extends (...args: any[]) => any
     ? T
@@ -83,13 +63,17 @@ type DeepMutable<T> = T extends (...args: any[]) => any
           -readonly [K in keyof T]: T[K] extends object ? DeepMutable<T[K]> : T[K];
       };
 
-type TupleToUnion<T extends unknown[], Result = never> = T extends [infer F, ...infer Last]
-    ? Extract<Result, F> extends never
-        ? TupleToUnion<Last, Result | F>
-        : TupleToUnion<Last, Result>
-    : Result;
-
-type Get<T extends unknown, Path extends string> = DeepMutable<GetAll<T, isGen<Path>>>;
+type Get<T extends unknown, Path extends string> = Path extends `${infer Left}.${infer Right}`
+    ? GenPaths<Left> extends infer P
+        ? P extends keyof T
+            ? Get<T[P], Right>
+            : never
+        : never
+    : GenPaths<Path> extends infer P
+    ? P extends keyof T
+        ? DeepMutable<T[P]>
+        : never
+    : never;
 
 type celestialName = Get<typeof celestialBody, "cosmic">; // Sirius
 type firstObservationMagnitude = Get<typeof celestialBody, "observations.0.magnitude">; // 1.46
