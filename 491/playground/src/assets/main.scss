@@ -1,0 +1,181 @@
+:root {
+  --land-position-top: 75%;
+  --land-position-left: 30%;
+  --island-position-top: 40%;
+  --island-position-left: 70%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: rgb(0, 166, 255);
+}
+
+.tests-container {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .test-case-buttons {
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    button {
+      background-color: #fff;
+      border: 1px solid #999;
+      appearance: none;
+      padding: 0.4em 0.8em;
+    }
+  }
+
+  .test-expectations {
+    color: #000;
+  }
+}
+
+.ocean {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  position: absolute;
+  border-radius: 100%;
+  overflow: hidden;
+  z-index: 2;
+  top: var(--body-position-top);
+  left: var(--body-position-left);
+  height: var(--body-size);
+  width: var(--body-size);
+  margin-left: calc(var(--body-size) / -2);
+  margin-top: calc(var(--body-size) / -2);
+
+  &.land {
+    --body-position-top: var(--land-position-top);
+    --body-position-left: var(--land-position-left);
+    --body-size: 400px;
+    --surface-color: #ffa940;
+    .city {
+      position: absolute;
+      left: 20%;
+      top: 40%;
+      width: 250px;
+      height: 250px;
+    }
+    .surface {
+      border: none;
+    }
+
+    .satellite-dish {
+      width: 40px;
+      height: 40px;
+      background: center / contain no-repeat url(./satellite-dish.svg);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -30px;
+      margin-left: -20px;
+    }
+  }
+
+  &.island {
+    --body-position-top: var(--island-position-top);
+    --body-position-left: var(--island-position-left);
+    --body-size: 120px;
+    --surface-color: rgb(242, 246, 11);
+
+    .surface {
+      border: none;
+    }
+
+    .palm {
+      position: absolute;
+      left: 50%;
+      top: 20%;
+      width: 50px;
+      height: 50px;
+    }
+  }
+
+  .surface {
+    position: absolute;
+    border-radius: 100%;
+    height: 140%;
+    width: 140%;
+    top: -30%;
+    right: -10%;
+    box-sizing: border-box;
+    border: 30px solid rgba(0, 0, 0, 0.15);
+    background: var(--surface-color);
+  }
+
+  .transmitters-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 25%;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 0;
+
+    .transmitter {
+      width: 20px;
+      height: 30px;
+      background: center / contain no-repeat url(./antenna.svg);
+    }
+  }
+}
+
+@keyframes raySlide {
+  0% {
+    top: 0;
+    left: 100%;
+  }
+
+  99% {
+    top: 90%;
+    left: 0%;
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.transmitter-rays-container {
+  position: absolute;
+  overflow: hidden;
+  z-index: 2;
+
+  .ray {
+    position: absolute;
+    height: 3px;
+    background: rgb(241, 253, 188);
+    border-radius: 5px;
+    box-shadow: 0 0 3px #fff;
+    animation-duration: 3s;
+    animation-name: raySlide;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+
+    &.long {
+      width: 30px;
+    }
+
+    &.short {
+      width: 10px;
+    }
+  }
+}
