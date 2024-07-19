@@ -49,7 +49,7 @@ type n = Num<q2>;
 type s = ParseInteger<"00001">;
 
 type Prepare<T extends readonly (string | number)[]> = {
-    [K in keyof T]: T[K] extends string ? ParseInteger<T[K]> : T[K];
+    -readonly [K in keyof T]: T[K] extends string ? ParseInteger<T[K]> : T[K];
 };
 
 type Solution<T extends readonly (string | number)[]> = Solution_<Prepare<T>>;
