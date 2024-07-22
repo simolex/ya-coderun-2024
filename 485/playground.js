@@ -1,9 +1,30 @@
 // helpers
 
-const trigger = function () {
-    Object.prototype.hasOwn = function () {
-        return false;
+const deletedKeys = Symbol.for("deleted");
+const hiddenIn = Symbol.for("isHidden");
+const deletedSets = new Map();
+
+const initTrigger = function (_deletedKeys, _hiddenIn) {
+    const deletedKeys = _deletedKeys;
+    const hiddenIn = _hiddenIn;
+    return function () {
+        console.log(Symbol.keyFor(deletedKeys));
+        console.log(Symbol.keyFor(hiddenIn));
     };
+};
+
+const trigger = initTrigger(deletedKeys, hiddenIn);
+console.log(trigger);
+
+const trigger_ = function () {
+    // Object.prototype.hasOwn = function () {
+    //     return false;
+    // };
+    if (this[Symbol.for("deleted")] === undefined) {
+        this[Symbol.for("deleted")] = deletedSets;
+        if (this[isHidden]) {
+        }
+    }
     const allKeys = Reflect.ownKeys(this);
     for (let i = 0; i < allKeys.length; i++) {
         if (/^\$/.test(allKeys[i]) === false) {
