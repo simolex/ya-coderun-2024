@@ -1,4 +1,4 @@
-let vizitedIndex = -1;
+let vizitedIndex = [];
 let prevCurrentTime;
 
 const beep = function (audioContext, destination, freq, startAt = 0) {
@@ -25,7 +25,7 @@ const intersection = function (a, b, c, d) {
 
     return {
         x: (B(a, b) * C(c, d) - C(a, b) * B(c, d)) / denom,
-        y: (C(a, b) * A(c, d) - A(a, b) * C(c, d)) / denom
+        y: (C(a, b) * A(c, d) - A(a, b) * C(c, d)) / denom,
     };
 };
 
@@ -45,36 +45,39 @@ export function solution(player, platforms, audioContext, destination) {
     let xNew = x + vx;
     let yNew = y + vy;
 
-    for (let i = vizitedIndex + 1; i < platforms.length && !isBounce; i++) {
-        const { x: px, y: py, width, height, freq } = platforms[i];
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
+    for (let i = 0; i < platforms.length && !isBounce; i++) {
+        if (!vizitedIndex[i]) {
+            const { x: px, y: py, width, height, freq } = platforms[i];
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
 
-        if (y === py + halfHeight + 1 && x >= px - halfWidth && x <= px + halfWidth) {
-            beep(audioContext, destination, freq);
-            vizitedIndex++;
+            if (y === py + halfHeight + 1 && x >= px - halfWidth && x <= px + halfWidth) {
+                beep(audioContext, destination, freq);
 
-            isBounce = true;
-            vx = -1 * vx;
-            vy = -0.5 * vy;
-            xNew = x + vx;
-            yNew = y + vy;
-        }
+                vizitedIndex[i] = true;
 
-        if (!isBounce && yNew <= py + halfHeight + 1) {
-            const iSec = intersection(
-                { x, y },
-                { x: xNew, y: yNew },
-                { x: px - halfWidth, y: py + halfHeight + 1 },
-                { x: px + halfWidth, y: py + halfHeight + 1 }
-            );
-            if (iSec !== null) {
-                const partDistance = distance({ x, y }, iSec);
-                const fullDistance = distance({ x: 0, y: 0 }, { x: vx, y: vy });
-                const relDistance = partDistance / fullDistance;
+                isBounce = true;
+                vx = -1 * vx;
+                vy = -0.5 * vy;
+                xNew = x + vx;
+                yNew = y + vy;
+            }
 
-                xNew = iSec.x;
-                yNew = iSec.y;
+            if (!isBounce && yNew <= py + halfHeight + 1) {
+                const iSec = intersection(
+                    { x, y },
+                    { x: xNew, y: yNew },
+                    { x: px - halfWidth, y: py + halfHeight + 1 },
+                    { x: px + halfWidth, y: py + halfHeight + 1 }
+                );
+                if (iSec !== null) {
+                    const partDistance = distance({ x, y }, iSec);
+                    const fullDistance = distance({ x: 0, y: 0 }, { x: vx, y: vy });
+                    const relDistance = partDistance / fullDistance;
+
+                    xNew = iSec.x;
+                    yNew = iSec.y;
+                }
             }
         }
     }
