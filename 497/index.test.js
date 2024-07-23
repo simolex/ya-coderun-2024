@@ -1,16 +1,13 @@
 const solution = require(".");
 
-describe("A. Быстрый поиск в массиве", () => {
+describe("497. Антивирус", () => {
     test("test-1", () => {
-        const result = solution(
-            [10, 1, 10, 3, 4],
-            [
-                [1, 10],
-                [2, 9],
-                [3, 4],
-                [2, 2]
-            ]
-        );
-        expect(result).toEqual([5, 2, 2, 0]);
+        const result = solution([
+            { type: "spyware", severity: "medium" },
+            { severity: "high", target: "winlogon.exe" },
+            { zippedSize: 12000, realSize: 56600 },
+            { zippedSize: 105000, vector: "usb_drive" },
+        ]);
+        expect(result).toEqual("");
     });
 });
