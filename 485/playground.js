@@ -1,67 +1,40 @@
 // helpers
 
-const objectThis = Symbol("objectThis");
-const deletedSets = new Map();
+const trigger = function () {
+    const objectThis = Symbol.for("objectThis");
 
-const initTrigger = function (_objectThis, _deletedSets) {
-    const objectThis = _objectThis;
-    const deletedSets = _deletedSets;
+    if (this[objectThis]) {
+        let originalFields = this[objectThis];
 
-    return function () {
-        if (this[objectThis]) {
-            let originalFields = deletedSets.get(this[objectThis]);
+        Object.assign(this, originalFields);
 
-            //проверяем,что нас не скопировали
-            if (this[objectThis] !== this) {
-                originalFields = Object.assign({}, originalFields);
-            }
+        delete this[objectThis];
+        return;
+    }
 
-            Object.assign(this, originalFields);
+    this[objectThis] = {};
+    Object.defineProperty(this, objectThis, {
+        // enumerable: false,
+    });
 
-            if (deletedSets.has(this)) {
-                deletedSets.delete(this);
-            }
-            this[objectThis] = undefined;
-            return;
+    const allKeys = Reflect.ownKeys(this);
+    for (let i = 0; i < allKeys.length; i++) {
+        if (typeof allKeys[i] !== "symbol" && /^\$/.test(allKeys[i]) === false) {
+            this[objectThis][allKeys[i]] = this[allKeys[i]];
+            delete this[allKeys[i]];
         }
-
-        this[objectThis] = this;
-        Object.defineProperty(this, objectThis, {
-            enumerable: false,
-        });
-
-        const allKeys = Reflect.ownKeys(this);
-        deletedSets.set(this, {});
-        for (let i = 0; i < allKeys.length; i++) {
-            if (typeof allKeys[i] !== "symbol" && /^\$/.test(allKeys[i]) === false) {
-                deletedSets.get(this)[allKeys[i]] = this[allKeys[i]];
-                delete this[allKeys[i]];
-            }
-        }
-    };
+    }
 };
 
-const initGetter = function (_objectThis, _deletedSets) {
-    const objectThis = _objectThis;
-    const deletedSets = _deletedSets;
+const getter = function (key) {
+    const objectThis = Symbol.for("objectThis");
+    let result = this[key];
 
-    return function (key) {
-        let result = this[key];
-
-        if (this[objectThis] !== this) {
-            const originalFields = Object.assign({}, originalFields);
-            deletedSets.set(this, originalFields);
-        }
-
-        if (!result && this[objectThis]) {
-            result = deletedSets.get(this)[key];
-        }
-        return result;
-    };
+    if (!result && this[objectThis]) {
+        result = this[objectThis][key];
+    }
+    return result;
 };
-
-const trigger = initTrigger(objectThis, deletedSets);
-const getter = initGetter(objectThis, deletedSets);
 
 module.exports = { trigger, getter };
 
@@ -82,7 +55,9 @@ const artObject = {
     $getter: getter,
 };
 artObject.$trigger();
-
+const n = Object.assign({}, artObject);
+artObject.$trigger();
+console.log("copy=>", n[Symbol.for("objectThis")]);
 // basic tests
 console.log(artObject);
 console.log(artObject["towers"]);
