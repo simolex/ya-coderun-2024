@@ -13,9 +13,6 @@ const trigger = function () {
     }
 
     this[objectThis] = {};
-    Object.defineProperty(this, objectThis, {
-        // enumerable: false,
-    });
 
     const allKeys = Reflect.ownKeys(this);
     for (let i = 0; i < allKeys.length; i++) {
@@ -55,9 +52,7 @@ const artObject = {
     $getter: getter,
 };
 artObject.$trigger();
-const n = Object.assign({}, artObject);
-artObject.$trigger();
-console.log("copy=>", n[Symbol.for("objectThis")]);
+
 // basic tests
 console.log(artObject);
 console.log(artObject["towers"]);
