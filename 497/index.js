@@ -89,6 +89,7 @@ function solution(values) {
             const typeField = createPrimitiveType([...allKeys.get(v).values()]);
             result.push(`${v}?: ${typeField}`);
         });
+
         return `{${result.join(", ")}}`;
     };
 
