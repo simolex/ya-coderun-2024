@@ -10,4 +10,15 @@ describe("497. Антивирус", () => {
         ]);
         expect(result).toEqual("");
     });
+    test("test-2", () => {
+        const result = solution([
+            { type: "ransomware", corruptUserData: true },
+            { type: "adware" },
+        ]);
+        expect(result).toEqual("{type: 'ransomware' | 'adware', corruptUserData?: boolean}");
+    });
+    test("test-3", () => {
+        const result = solution([null, undefined, true, "", 0, {}]);
+        expect(result).toEqual("");
+    });
 });
