@@ -41,4 +41,20 @@ describe("497. Антивирус", () => {
         ]);
         expect(result).toEqual("{} | undefined | boolean | '' | null | 0");
     });
+    test("test-6", () => {
+        const result = solution([
+            { t1: 1 },
+            { t1: 4 },
+            { t1: 6 },
+            { t1: 8 },
+            { t1: 7 },
+            { t1: "5" },
+            { t1: "1" },
+            { t1: "4" },
+            { t1: "6" },
+            { t1: "8" },
+            { t1: "7" },
+        ]);
+        expect(result).toEqual("{} | undefined | boolean | '' | null | 0");
+    });
 });

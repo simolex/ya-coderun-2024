@@ -124,70 +124,84 @@ function solution(values) {
         intersectGroups.set(key, { patterns, scope });
     });
 
-    // do {
-    //     checkSum = 0;
+    // console.dir(allGroups, { depth: null, maxArrayLength: null });
 
-    //     allGroups.forEach((p1, i) => {
-    //         allGroups.forEach((p2, j) => {
-    //             if (j > i) {
-    //                 let sum = 0;
+    do {
+        checkSum = 0;
 
-    //                 const p1Key = JSON.parse(p1.key);
-    //                 const p2Key = JSON.parse(p2.key);
+        allGroups.forEach((p1, i) => {
+            allGroups.forEach((p2, j) => {
+                if (j > i) {
+                    let sum = 0;
 
-    //                 const intSec = p1Key.map((v, idx) => {
-    //                     const res = v && p2Key[idx];
-    //                     sum += res;
-    //                     return res;
-    //                 });
+                    const p1Key = JSON.parse(p1.key);
+                    const p2Key = JSON.parse(p2.key);
 
-    //                 if (sum > 0) {
-    //                     const intSecHash = JSON.stringify(intSec);
+                    const intSec = p1Key.map((v, idx) => {
+                        const res = v && p2Key[idx];
+                        sum += res;
+                        return res;
+                    });
 
-    //                     if (!intersectGroups.has(intSecHash)) {
-    //                         intersectGroups.set(intSecHash, { patterns: [] });
-    //                     }
-    //                     const arr = intersectGroups
-    //                         .get(intSecHash)
-    //                         .patterns.concat(p1.patterns)
-    //                         .concat(p2.patterns);
-    //                     intersectGroups.get(intSecHash)["patterns"] = arr;
+                    if (i === 0 && j === 1) {
+                    }
 
-    //                     const newScope = new Map();
-    //                     p1.scope.forEach((values, key) => {
-    //                         if (!newScope.has(key)) {
-    //                             newScope.set(key, new Set());
-    //                         }
-    //                         values.forEach((v) => newScope.get(key).add(v));
-    //                     });
+                    if (sum > 0) {
+                        const intSecHash = JSON.stringify(intSec);
 
-    //                     p2.scope.forEach((values, key) => {
-    //                         if (!newScope.has(key)) {
-    //                             newScope.set(key, new Set());
-    //                         }
-    //                         values.forEach((v) => newScope.get(key).add(v));
-    //                     });
+                        if (!intersectGroups.has(intSecHash)) {
+                            intersectGroups.set(intSecHash, { patterns: [], scope: new Map() });
+                        }
+                        const arr = intersectGroups
+                            .get(intSecHash)
+                            .patterns.concat(p1.patterns)
+                            .concat(p2.patterns);
+                        intersectGroups.get(intSecHash).patterns = arr;
+                        if (i === 0 && j === 1) {
+                        }
 
-    //                     intersectGroups.get(intSecHash)["scope"] = newScope;
+                        const newScope = intersectGroups.get(intSecHash).scope;
 
-    //                     if (intSecHash !== p1.key) {
-    //                         intersectGroups.delete(p1.key);
-    //                     }
+                        p1.scope.forEach((values, key) => {
+                            if (!newScope.has(key)) {
+                                newScope.set(key, new Set());
+                            }
+                            values.forEach((v) => newScope.get(key).add(v));
+                        });
 
-    //                     if (intSecHash !== p2.key) {
-    //                         intersectGroups.delete(p2.key);
-    //                     }
-    //                 }
-    //                 checkSum += sum;
-    //             }
-    //         });
-    //     });
+                        p2.scope.forEach((values, key) => {
+                            if (!newScope.has(key)) {
+                                newScope.set(key, new Set());
+                            }
+                            values.forEach((v) => newScope.get(key).add(v));
+                        });
+                        if (i === 0 && j === 1) {
+                        }
 
-    //     allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
-    //         obj.push({ key: item, ...intersectGroups.get(item) });
-    //         return obj;
-    //     }, []);
-    // } while (checkSum > 0);
+                        intersectGroups.get(intSecHash).scope = newScope;
+
+                        if (intSecHash !== p1.key) {
+                            intersectGroups.delete(p1.key);
+                        }
+
+                        if (intSecHash !== p2.key) {
+                            intersectGroups.delete(p2.key);
+                        }
+                    }
+                    checkSum += sum;
+                }
+            });
+        });
+
+        // console.dir(intersectGroups, { depth: null, maxArrayLength: null });
+
+        allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
+            obj.push({ key: item, ...intersectGroups.get(item) });
+            return obj;
+        }, []);
+
+        // console.dir(allGroups, { depth: null, maxArrayLength: null });
+    } while (checkSum > 0);
 
     const output = [];
 
