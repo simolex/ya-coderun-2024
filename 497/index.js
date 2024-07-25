@@ -124,70 +124,70 @@ function solution(values) {
         intersectGroups.set(key, { patterns, scope });
     });
 
-    do {
-        checkSum = 0;
+    // do {
+    //     checkSum = 0;
 
-        allGroups.forEach((p1, i) => {
-            allGroups.forEach((p2, j) => {
-                if (j > i) {
-                    let sum = 0;
+    //     allGroups.forEach((p1, i) => {
+    //         allGroups.forEach((p2, j) => {
+    //             if (j > i) {
+    //                 let sum = 0;
 
-                    const p1Key = JSON.parse(p1.key);
-                    const p2Key = JSON.parse(p2.key);
+    //                 const p1Key = JSON.parse(p1.key);
+    //                 const p2Key = JSON.parse(p2.key);
 
-                    const intSec = p1Key.map((v, idx) => {
-                        const res = v && p2Key[idx];
-                        sum += res;
-                        return res;
-                    });
+    //                 const intSec = p1Key.map((v, idx) => {
+    //                     const res = v && p2Key[idx];
+    //                     sum += res;
+    //                     return res;
+    //                 });
 
-                    if (sum > 0) {
-                        const intSecHash = JSON.stringify(intSec);
+    //                 if (sum > 0) {
+    //                     const intSecHash = JSON.stringify(intSec);
 
-                        if (!intersectGroups.has(intSecHash)) {
-                            intersectGroups.set(intSecHash, { patterns: [] });
-                        }
-                        const arr = intersectGroups
-                            .get(intSecHash)
-                            .patterns.concat(p1.patterns)
-                            .concat(p2.patterns);
-                        intersectGroups.get(intSecHash)["patterns"] = arr;
+    //                     if (!intersectGroups.has(intSecHash)) {
+    //                         intersectGroups.set(intSecHash, { patterns: [] });
+    //                     }
+    //                     const arr = intersectGroups
+    //                         .get(intSecHash)
+    //                         .patterns.concat(p1.patterns)
+    //                         .concat(p2.patterns);
+    //                     intersectGroups.get(intSecHash)["patterns"] = arr;
 
-                        const newScope = new Map();
-                        p1.scope.forEach((values, key) => {
-                            if (!newScope.has(key)) {
-                                newScope.set(key, new Set());
-                            }
-                            values.forEach((v) => newScope.get(key).add(v));
-                        });
+    //                     const newScope = new Map();
+    //                     p1.scope.forEach((values, key) => {
+    //                         if (!newScope.has(key)) {
+    //                             newScope.set(key, new Set());
+    //                         }
+    //                         values.forEach((v) => newScope.get(key).add(v));
+    //                     });
 
-                        p2.scope.forEach((values, key) => {
-                            if (!newScope.has(key)) {
-                                newScope.set(key, new Set());
-                            }
-                            values.forEach((v) => newScope.get(key).add(v));
-                        });
+    //                     p2.scope.forEach((values, key) => {
+    //                         if (!newScope.has(key)) {
+    //                             newScope.set(key, new Set());
+    //                         }
+    //                         values.forEach((v) => newScope.get(key).add(v));
+    //                     });
 
-                        intersectGroups.get(intSecHash)["scope"] = newScope;
+    //                     intersectGroups.get(intSecHash)["scope"] = newScope;
 
-                        if (intSecHash !== p1.key) {
-                            intersectGroups.delete(p1.key);
-                        }
+    //                     if (intSecHash !== p1.key) {
+    //                         intersectGroups.delete(p1.key);
+    //                     }
 
-                        if (intSecHash !== p2.key) {
-                            intersectGroups.delete(p2.key);
-                        }
-                    }
-                    checkSum += sum;
-                }
-            });
-        });
+    //                     if (intSecHash !== p2.key) {
+    //                         intersectGroups.delete(p2.key);
+    //                     }
+    //                 }
+    //                 checkSum += sum;
+    //             }
+    //         });
+    //     });
 
-        allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
-            obj.push({ key: item, ...intersectGroups.get(item) });
-            return obj;
-        }, []);
-    } while (checkSum > 0);
+    //     allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
+    //         obj.push({ key: item, ...intersectGroups.get(item) });
+    //         return obj;
+    //     }, []);
+    // } while (checkSum > 0);
 
     const output = [];
 
