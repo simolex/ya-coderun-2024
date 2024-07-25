@@ -23,12 +23,21 @@ describe("497. Антивирус", () => {
         const result = solution([null, undefined, true, "", 0, {}]);
         expect(result).toEqual("{} | undefined | boolean | '' | null | 0");
     });
-    test("test-3", () => {
+    test("test-4", () => {
         const result = solution([
             { t1: 1, t2: 2, t3: 3 },
             { t1: 1, t2: 2 },
             { t1: 1, t3: 3 },
             { t2: 2, t3: 3 },
+        ]);
+        expect(result).toEqual("{} | undefined | boolean | '' | null | 0");
+    });
+    test("test-5", () => {
+        const result = solution([
+            { t1: 1, t2: 2, t3: 3 },
+            { t1: 4, t2: 5 },
+            { t1: 6, t3: 7 },
+            { t2: 8, t3: 9 },
         ]);
         expect(result).toEqual("{} | undefined | boolean | '' | null | 0");
     });

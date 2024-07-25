@@ -43,7 +43,7 @@ function createPrimitiveType(list) {
 }
 
 function solution(values) {
-    const allKeys = new Map();
+    const allKeys = new Set();
     const allPrimitives = new Set();
 
     for (const item of values) {
@@ -53,10 +53,7 @@ function solution(values) {
         }
 
         for (const key in item) {
-            if (!allKeys.has(key)) {
-                allKeys.set(key, new Set());
-            }
-            allKeys.get(key).add(item[key]);
+            allKeys.add(key);
         }
     }
 
@@ -70,13 +67,13 @@ function solution(values) {
 
         keyPattern.forEach((v, i) => {
             if (negativePattern[i] === 1) {
-                const typeField = createPrimitiveType([...allKeys.get(v).values()]);
+                const typeField = createPrimitiveType([...patternBody.scope.get(v).values()]);
                 result.push(`${v}: ${typeField}`);
             }
         });
 
-        patternBody = new Set(patternBody);
-        for (let body of patternBody.values()) {
+        const allPatternBody = new Set(patternBody.patterns);
+        for (let body of allPatternBody.values()) {
             const originPattern = JSON.parse(body);
             keyPattern.forEach((v, i) => {
                 if (originPattern[i] === 1 - negativePattern[i]) {
@@ -86,14 +83,14 @@ function solution(values) {
         }
 
         listPartials.forEach((v) => {
-            const typeField = createPrimitiveType([...allKeys.get(v).values()]);
+            const typeField = createPrimitiveType([...patternBody.scope.get(v).values()]);
             result.push(`${v}?: ${typeField}`);
         });
 
         return `{${result.join(", ")}}`;
     };
 
-    const groupByKeys = new Set();
+    const groupByKeys = new Map();
 
     for (const item of values) {
         const surprint = [];
@@ -101,19 +98,30 @@ function solution(values) {
             surprint.push(key in item ? 1 : 0);
         }
         const surprintHash = JSON.stringify(surprint);
-        groupByKeys.add(surprintHash);
+
+        if (!groupByKeys.has(surprintHash)) {
+            groupByKeys.set(surprintHash, new Map());
+        }
+        //saving scope
+        const scope = groupByKeys.get(surprintHash);
+        for (const key in item) {
+            if (!scope.has(key)) {
+                scope.set(key, new Set());
+            }
+            scope.get(key).add(item[key]);
+        }
     }
 
     let checkSum;
     let intersectGroups = new Map();
 
     let allGroups = [...groupByKeys].reduce((obj, item) => {
-        obj.push({ key: item, patterns: [item] });
+        obj.push({ key: item[0], patterns: [item[0]], scope: item[1] });
         return obj;
     }, []);
 
-    allGroups.forEach((v) => {
-        intersectGroups.set(v.key, v.patterns);
+    allGroups.forEach(({ key, patterns, scope }) => {
+        intersectGroups.set(key, { patterns, scope });
     });
 
     do {
@@ -137,13 +145,30 @@ function solution(values) {
                         const intSecHash = JSON.stringify(intSec);
 
                         if (!intersectGroups.has(intSecHash)) {
-                            intersectGroups.set(intSecHash, []);
+                            intersectGroups.set(intSecHash, { patterns: [] });
                         }
                         const arr = intersectGroups
                             .get(intSecHash)
-                            .concat(p1.patterns)
+                            .patterns.concat(p1.patterns)
                             .concat(p2.patterns);
-                        intersectGroups.set(intSecHash, arr);
+                        intersectGroups.get(intSecHash)["patterns"] = arr;
+
+                        const newScope = new Map();
+                        p1.scope.forEach((values, key) => {
+                            if (!newScope.has(key)) {
+                                newScope.set(key, new Set());
+                            }
+                            values.forEach((v) => newScope.get(key).add(v));
+                        });
+
+                        p2.scope.forEach((values, key) => {
+                            if (!newScope.has(key)) {
+                                newScope.set(key, new Set());
+                            }
+                            values.forEach((v) => newScope.get(key).add(v));
+                        });
+
+                        intersectGroups.get(intSecHash)["scope"] = newScope;
 
                         if (intSecHash !== p1.key) {
                             intersectGroups.delete(p1.key);
@@ -159,7 +184,7 @@ function solution(values) {
         });
 
         allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
-            obj.push({ key: item, patterns: intersectGroups.get(item) });
+            obj.push({ key: item, ...intersectGroups.get(item) });
             return obj;
         }, []);
     } while (checkSum > 0);
