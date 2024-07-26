@@ -41,7 +41,7 @@ const alphabetMorze = {
     7: "--…",
     8: "---..",
     9: "----.",
-    0: "-----",
+    0: "-----"
 };
 
 const charToToken = (letter) => {
@@ -58,65 +58,73 @@ const charToToken = (letter) => {
 
 const setPause = (_ms) => {
     const ms = _ms;
-    return () =>
-        new Promise((res) => {
-            setTimeout(res, ms);
-        });
+    console.log(_ms);
+    return new Promise((res) => {
+        setTimeout(res, ms, "true");
+    });
 };
 
-class TransmitterUI {
-    actions = {
-        short: () => [this._startSignal, this.shortPausePromise, this._stopSignal],
-        // await this._startSignal();
-        // await this.shortPausePromise();
-        // await this._stopSignal();
-        // },
-        long: () => Promise.race([this._startSignal, this.longPausePromise, this._stopSignal]),
-        pause: () => setPause(this.charPause),
-    };
+function queue(fnArray, onError, initialData) {
+    return fnArray
+        .reduce((p, f) => {
+            console.log(p);
+            return p.then(f);
+        }, Promise.resolve(initialData))
+        .catch(onError);
+}
 
+class TransmitterUI {
     constructor(transmitter, { shortSignalPause, longSignalPause, charPause, wordPause }) {
         this.transmitter = transmitter;
 
-        this.shortPausePromise = setPause(shortSignalPause);
-        this.longPausePromise = setPause(longSignalPause);
-        this.charPausePromise = setPause(charPause);
+        this.shortPausePromise = shortSignalPause;
+        this.longPausePromise = longSignalPause;
+        this.charPausePromise = charPause;
         this.wordPause = wordPause;
+
+        this.actions = {
+            short: () => [() => this._startSignal(), () => setPause(this.shortPausePromise), () => this._stopSignal()],
+
+            long: () => [
+                () => () => this._startSignal(),
+                () => () => setPause(this.longSignalPause),
+                () => () => this._stopSignal()
+            ],
+            pause: () => [() => () => setPause(this.charPause)]
+        };
     }
 
     _startSignal() {
-        return this.transmitter.taskRunner(() =>
-            Promise.resolve.then(() => {
-                this.transmitter.F();
-                this.transmitter.D();
-                return;
-            })
-        );
-
-        // new Promise((res, rej) =>
-        //     this.transmitter
-        //         .taskRunner()
-        //         .then((resp) => res(resp))
-        //         .catch((err) => rej(err))
-        // );
+        return new Promise((res, rej) => {
+            this.transmitter.taskRunner(async () => {
+                try {
+                    const p = await Promise.all([this.transmitter.F(), this.transmitter.D()]);
+                    res(p);
+                } catch (e) {
+                    rej(e);
+                }
+            });
+        });
     }
 
     _stopSignal() {
-        return new Promise((res, rej) =>
-            this.transmitter
-                .taskRunner(Promise.all([this.transmitter.B, this.transmitter.U]))
-                .then((resp) => res(resp))
-                .catch((err) => rej(err))
-        );
-        // return this.transmitter.taskRunner(Promise.all([this.transmitter.B, this.transmitter.U]));
+        return new Promise((res, rej) => {
+            this.transmitter.taskRunner(() => {
+                Promise.all([this.transmitter.B(), this.transmitter.U()]).then(res).catch(rej);
+            });
+        });
     }
 
     async _charToSignal(letter) {
         const tokens = charToToken(letter);
         console.log(tokens);
-        const m = tokens.map((t) => this.actions[t]());
-        console.log(m);
-        return Promise.race(m);
+        const t = tokens.reduce((p, t) => p.concat(this.actions[t]()), []);
+        // .filter((f) => typeof f === "function");
+        console.log(t);
+
+        queue(t, "", []);
+
+        //return Promise.all(m).catch((e) => console.error(e));
     }
 }
 
@@ -129,7 +137,7 @@ module.exports = async function result(
         shortSignalPause,
         longSignalPause,
         charPause,
-        wordPause,
+        wordPause
     });
     await ui.transmitter.init().then(() => ui._charToSignal("ф"));
 };

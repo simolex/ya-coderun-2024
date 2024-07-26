@@ -3,7 +3,7 @@ import { TransmitterPresenter } from "./utils/transmitterPresenter";
 const STATUSES = {
     off: "OFF",
     inited: "INITED",
-    working: "WORKING",
+    working: "WORKING"
 };
 
 export class Transmitter {
@@ -126,12 +126,12 @@ export class Transmitter {
         if (!this.isTaskRunning) {
             throw new Error("Этот метод не может использоваться сейчас");
         }
-        console.log("F");
 
         this.status = STATUSES.working;
 
         return this.getRandomResult(() => {
             this.status = STATUSES.inited;
+            console.log("F");
             return this.logger("F");
         });
     }
@@ -142,10 +142,10 @@ export class Transmitter {
         }
 
         this.status = STATUSES.working;
-        console.log("D");
 
         return this.getRandomResult(() => {
             this.status = STATUSES.inited;
+            console.log("D");
             return this.logger("D");
         });
     }
