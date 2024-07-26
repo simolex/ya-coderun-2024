@@ -24,25 +24,27 @@ export class Transmitter {
     }
 
     async logger(move) {
-        if (move === this.logs[this.logs.length - 1] && move !== 'E' && move !== 'T') {
+        if (move === this.logs[this.logs.length - 1] && move !== "E" && move !== "T") {
             throw new Error("Oшибка повторения действия");
         }
         this.logs += move;
         const last = this.logs.slice(-2);
         const dif = this.date ? new Date() - this.date : 0;
 
-        if (dif > 1500 && this.logs[this.logs.length - 1] !== 'E') {
-            this.result.textContent += " ";
+        if (dif > 1500 && this.logs[this.logs.length - 1] !== "E") {
+            // this.result.textContent += " ";
+            this.result.textContent += "@";
+            console.log("PPPPaused"); //my
         }
 
         if (last === "FD" || last === "DF") {
-            if (this.logs.slice(-3, -2) !== 'T') {
-                throw new Error('TaskRunner может запускать только два действия одновременно')
+            if (this.logs.slice(-3, -2) !== "T") {
+                throw new Error("TaskRunner может запускать только два действия одновременно");
             }
             this.date = new Date();
         } else if (last === "UB" || last === "BU") {
-            if (this.logs.slice(-3, -2) !== 'T') {
-                throw new Error('TaskRunner может запускать только два действия одновременно')
+            if (this.logs.slice(-3, -2) !== "T") {
+                throw new Error("TaskRunner может запускать только два действия одновременно");
             }
             if (this.date) {
                 const dif = new Date() - this.date;
@@ -55,9 +57,11 @@ export class Transmitter {
                 }
             }
         }
-        if (move === 'R') {
-            this.result.textContent += "| "
+        if (move === "R") {
+            // this.result.textContent += "| ";
+            this.result.textContent += "|@";
         }
+        console.log(this.status);
     }
 
     getRandomResult(callback, timeout = 10, percent = this.percent) {
@@ -67,18 +71,16 @@ export class Transmitter {
                     res();
                 } else {
                     this.status = STATUSES.inited;
-                    this.isTaskRunning = false
+                    this.isTaskRunning = false;
 
-                    this.logger('E')
-
+                    this.logger("E");
 
                     this.result.textContent = this.result.textContent.slice(
                         0,
-                        this.result.textContent.lastIndexOf(" ") + 1
+                        // this.result.textContent.lastIndexOf(" ") + 1
+                        this.result.textContent.lastIndexOf("@") + 1
                     );
-                    rej(
-                        "Произошла ошибка, TaskRunner сброшен"
-                    );
+                    rej("Произошла ошибка, TaskRunner сброшен");
                 }
             }, timeout)
         ).then(callback);
@@ -86,7 +88,7 @@ export class Transmitter {
 
     async init() {
         return this.getRandomResult(() => {
-            this.logger('I')
+            this.logger("I");
             this.status = STATUSES.inited;
         });
     }
@@ -100,7 +102,7 @@ export class Transmitter {
         }
 
         this.isTaskRunning = true;
-        this.logger('T')
+        this.logger("T");
 
         setTimeout(() =>
             task().then(() => {
@@ -114,13 +116,17 @@ export class Transmitter {
             throw new Error("Этот метод не может использоваться сейчас");
         }
 
-        return this.getRandomResult(() => { this.status = STATUSES.inited; this.logger('R') });
+        return this.getRandomResult(() => {
+            this.status = STATUSES.inited;
+            this.logger("R");
+        });
     }
 
     async F() {
         if (!this.isTaskRunning) {
             throw new Error("Этот метод не может использоваться сейчас");
         }
+        console.log("F");
 
         this.status = STATUSES.working;
 
@@ -136,6 +142,7 @@ export class Transmitter {
         }
 
         this.status = STATUSES.working;
+        console.log("D");
 
         return this.getRandomResult(() => {
             this.status = STATUSES.inited;
