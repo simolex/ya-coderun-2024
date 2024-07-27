@@ -85,33 +85,23 @@ class TransmitterUI {
         this.actions = {
             short: () => [() => this._startSignal(), () => setPause(this.shortPausePromise), () => this._stopSignal()],
 
-            long: () => [
-                () => () => this._startSignal(),
-                () => () => setPause(this.longSignalPause),
-                () => () => this._stopSignal()
-            ],
-            pause: () => [() => () => setPause(this.charPause)]
+            long: () => [() => this._startSignal(), () => setPause(this.longPausePromise), () => this._stopSignal()],
+            pause: () => [() => setPause(this.charPausePromise)]
         };
     }
 
     _startSignal() {
         return new Promise((res, rej) => {
-            this.transmitter.taskRunner(async () => {
-                try {
-                    const p = await Promise.all([this.transmitter.F(), this.transmitter.D()]);
-                    res(p);
-                } catch (e) {
-                    rej(e);
-                }
-            });
+            this.transmitter.taskRunner(() =>
+                Promise.all([this.transmitter.F(), this.transmitter.D()]).then(res).catch(rej)
+            );
         });
     }
-
     _stopSignal() {
         return new Promise((res, rej) => {
-            this.transmitter.taskRunner(() => {
-                Promise.all([this.transmitter.B(), this.transmitter.U()]).then(res).catch(rej);
-            });
+            this.transmitter.taskRunner(() =>
+                Promise.all([this.transmitter.B(), this.transmitter.U()]).then(res).catch(rej)
+            );
         });
     }
 
@@ -119,12 +109,9 @@ class TransmitterUI {
         const tokens = charToToken(letter);
         console.log(tokens);
         const t = tokens.reduce((p, t) => p.concat(this.actions[t]()), []);
-        // .filter((f) => typeof f === "function");
         console.log(t);
 
         queue(t, "", []);
-
-        //return Promise.all(m).catch((e) => console.error(e));
     }
 }
 
@@ -139,5 +126,5 @@ module.exports = async function result(
         charPause,
         wordPause
     });
-    await ui.transmitter.init().then(() => ui._charToSignal("ф"));
+    await ui.transmitter.init().then(() => ui._charToSignal("у"));
 };
