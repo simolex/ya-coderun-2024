@@ -212,20 +212,18 @@ class TransmitterUI {
         return task;
     }
 
-    async loop(res) {
-        //TODO new Promise
+    async loop(stop) {
         while (this.needWork) {
             if (this.messageQueue.size() > 0) {
                 const incomingMessage = this.messageQueue.pop();
 
                 if (incomingMessage.length > 0) {
-                    await this.sendMessage(incomingMessage);
+                    this.sendMessage(incomingMessage);
                     this.pointerQueue++;
                 }
             }
         }
-
-        return res; // resolve from Promise
+        stop();
     }
 }
 
@@ -237,7 +235,7 @@ module.exports = async function result(
     const messages = new Queue();
     UIs = [];
     for (let transmitter of transmitters) {
-        const ui = await new TransmitterUI(
+        const ui = new TransmitterUI(
             transmitter,
             {
                 shortSignalPause,
@@ -260,7 +258,7 @@ module.exports = async function result(
         };
     }
 
-    const w = UIs.map((ui) => setPause(0).then(ui.loop.bind(ui)));
+    const w = UIs.map((ui) => new Promise((res) => ui.loop(res)));
     console.log(w);
     await Promise.all(w);
 };
