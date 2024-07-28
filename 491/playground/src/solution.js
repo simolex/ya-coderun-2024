@@ -1,3 +1,32 @@
+const cyrToLat = {
+    A: "А",
+    B: "Б",
+    W: "В",
+    G: "Г",
+    D: "Д",
+    E: "Е",
+    V: "Ж",
+    Z: "З",
+    I: "И",
+    J: "Й",
+    K: "К",
+    L: "Л",
+    M: "М",
+    N: "Н",
+    O: "О",
+    P: "П",
+    R: "Р",
+    S: "С",
+    T: "Т",
+    U: "У",
+    F: "Ф",
+    H: "Х",
+    C: "Ц",
+    Q: "Щ",
+    X: "Ь",
+    X: "Ъ",
+    Y: "Ы"
+};
 const alphabetMorze = {
     А: ".-",
     Б: "-...",
@@ -45,7 +74,13 @@ const alphabetMorze = {
 };
 
 const charToToken = (letter) => {
-    const codeMorze = alphabetMorze[letter.toUpperCase()];
+    let letterUpped = letter.toUpperCase();
+
+    if (cyrToLat[letterUpped]) {
+        letterUpped = cyrToLat[letterUpped];
+    }
+
+    let codeMorze = alphabetMorze[letterUpped];
     if (!codeMorze) {
         return [];
     }
@@ -58,23 +93,42 @@ const charToToken = (letter) => {
 
 const setPause = (_ms) => {
     const ms = _ms;
-    console.log(_ms);
     return new Promise((res) => {
         setTimeout(res, ms, "true");
     });
 };
 
 function queue(fnArray, onError, initialData) {
-    return fnArray
-        .reduce((p, f) => {
-            console.log(p);
-            return p.then(f);
-        }, Promise.resolve(initialData))
-        .catch(onError);
+    return fnArray.reduce((p, f) => p.then(f), Promise.resolve(initialData)).catch(onError);
+}
+
+class Queue {
+    constructor() {
+        this.queue = [];
+        this.frontPtr = 0;
+    }
+
+    push(n) {
+        this.queue.push(n);
+        return "ok";
+    }
+
+    pop() {
+        if (this.size() > 0) {
+            return this.queue[this.frontPtr++];
+        }
+        return "error";
+    }
+
+    size() {
+        return this.queue.length - this.frontPtr;
+    }
 }
 
 class TransmitterUI {
-    constructor(transmitter, { shortSignalPause, longSignalPause, charPause, wordPause }) {
+    needWork = true;
+    constructor(transmitter, { shortSignalPause, longSignalPause, charPause, wordPause }, messageQueue) {
+        this.messageQueue = messageQueue;
         this.transmitter = transmitter;
 
         this.shortPausePromise = shortSignalPause;
@@ -88,6 +142,10 @@ class TransmitterUI {
             long: () => [() => this._startSignal(), () => setPause(this.longPausePromise), () => this._stopSignal()],
             pause: () => [() => setPause(this.charPausePromise)]
         };
+    }
+
+    stopWork() {
+        needWork = false;
     }
 
     _startSignal() {
@@ -105,13 +163,69 @@ class TransmitterUI {
         });
     }
 
-    async _charToSignal(letter) {
+    _charToSignal(letter) {
         const tokens = charToToken(letter);
-        console.log(tokens);
-        const t = tokens.reduce((p, t) => p.concat(this.actions[t]()), []);
-        console.log(t);
+        const actions = tokens.reduce((p, t) => p.concat(this.actions[t]()), []);
 
-        queue(t, "", []);
+        return queue(actions, "", []);
+    }
+
+    async _sendWord(word) {
+        const letters = word.trim().split("");
+        let wordSended = false;
+
+        let task; // = await setPause(this.wordPause);
+        while (!wordSended) {
+            try {
+                if (letters.length > 0) {
+                    task = await this._charToSignal(letters[0]);
+                }
+                for (let i = 1; i < letters.length; i++) {
+                    task = await setPause(this.charPausePromise);
+                    task = await this._charToSignal(letters[i]);
+                }
+                wordSended = true;
+            } catch (e) {
+                wordSended = false;
+            }
+        }
+        task = await setPause(this.wordPause);
+
+        return task;
+    }
+
+    async sendMessage(msg) {
+        msg = msg
+            .trim()
+            .split(" ")
+            .filter((word) => word.length > 0);
+
+        let task = await this.transmitter.init();
+        task = await setPause(this.wordPause);
+
+        for (let word of msg) {
+            task = await this._sendWord(word);
+        }
+
+        task = await this.transmitter.reset();
+
+        return task;
+    }
+
+    async loop(res) {
+        //TODO new Promise
+        while (this.needWork) {
+            if (this.messageQueue.size() > 0) {
+                const incomingMessage = this.messageQueue.pop();
+
+                if (incomingMessage.length > 0) {
+                    await this.sendMessage(incomingMessage);
+                    this.pointerQueue++;
+                }
+            }
+        }
+
+        return res; // resolve from Promise
     }
 }
 
@@ -120,11 +234,33 @@ module.exports = async function result(
     transmitters = [],
     { shortSignalPause = 500, longSignalPause = 1000, charPause = 200, wordPause = 2000 }
 ) {
-    const ui = new TransmitterUI(transmitters[0], {
-        shortSignalPause,
-        longSignalPause,
-        charPause,
-        wordPause
-    });
-    await ui.transmitter.init().then(() => ui._charToSignal("у"));
+    const messages = new Queue();
+    UIs = [];
+    for (let transmitter of transmitters) {
+        const ui = await new TransmitterUI(
+            transmitter,
+            {
+                shortSignalPause,
+                longSignalPause,
+                charPause,
+                wordPause
+            },
+            messages
+        );
+
+        UIs.push(ui);
+    }
+
+    if (transmitters.length > 0) {
+        socket.onmessage = async (e) => {
+            messages.push(String(e.data));
+        };
+        socket.onclose = async (e) => {
+            UIs.forEach((ui) => ui.stopWork());
+        };
+    }
+
+    const w = UIs.map((ui) => setPause(0).then(ui.loop.bind(ui)));
+    console.log(w);
+    await Promise.all(w);
 };

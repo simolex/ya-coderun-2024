@@ -34,7 +34,6 @@ export class Transmitter {
         if (dif > 1500 && this.logs[this.logs.length - 1] !== "E") {
             // this.result.textContent += " ";
             this.result.textContent += "@";
-            console.log("PPPPaused"); //my
         }
 
         if (last === "FD" || last === "DF") {
@@ -61,7 +60,6 @@ export class Transmitter {
             // this.result.textContent += "| ";
             this.result.textContent += "|@";
         }
-        console.log(this.status);
     }
 
     getRandomResult(callback, timeout = 10, percent = this.percent) {
@@ -131,7 +129,6 @@ export class Transmitter {
 
         return this.getRandomResult(() => {
             this.status = STATUSES.inited;
-            console.log("F");
             return this.logger("F");
         });
     }
@@ -145,7 +142,6 @@ export class Transmitter {
 
         return this.getRandomResult(() => {
             this.status = STATUSES.inited;
-            console.log("D");
             return this.logger("D");
         });
     }
