@@ -1,0 +1,2 @@
+const solution = require(".");
+solution();
