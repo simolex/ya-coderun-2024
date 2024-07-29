@@ -1,11 +1,15 @@
 module.exports = (opts = { vendorPrefixes: {} }) => {
+    let root;
     return {
         postcssPlugin: "Autoprefixer",
-        Once(root) {
-            // Calls once per file, since every file has single Root
+        Once(_root) {
+            root = _root;
         },
         Rule(decl) {
-            console.log(decl);
+            console.log(decl.selector);
+            // for (const rule of decl.nodes) {
+            //     console.log(rule.selector);
+            // }
             // All declaration nodes
         },
     };
