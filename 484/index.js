@@ -5,7 +5,7 @@ class LineByLine {
     constructor(file, options) {
         options = options || {};
 
-        if (!options.readChunk) options.readChunk = 1024;
+        if (!options.readChunk) options.readChunk = 256;
 
         if (!options.newLineCharacter) {
             options.newLineCharacter = 0x0a; //linux line ending
@@ -43,8 +43,6 @@ class LineByLine {
     reset() {
         this.eofReached = false;
         this.linesCache = [];
-        this.positionsCache = [];
-        this.lastPosition = 0;
         this.fdPosition = 0;
     }
 
@@ -65,12 +63,7 @@ class LineByLine {
             if (bufferPositionValue === this.newLineCharacter) {
                 line = buffer.slice(lastNewLineBufferPosition, bufferPosition);
                 lines.push(line);
-                this.positionsCache.push(this.lastPosition);
-                this.lastPosition += bufferPosition;
-
                 lastNewLineBufferPosition = bufferPosition;
-                this.fdPosition = this.lastPosition;
-                break;
             } else if (bufferPositionValue === undefined) {
                 break;
             }
@@ -92,13 +85,22 @@ class LineByLine {
         do {
             const readBuffer = Buffer.alloc(this.options.readChunk);
 
-            bytesRead = fs.readSync(this.fd, readBuffer, 0, this.options.readChunk, this.fdPosition);
+            bytesRead = fs.readSync(
+                this.fd,
+                readBuffer,
+                0,
+                this.options.readChunk,
+                this.fdPosition
+            );
             totalBytesRead = totalBytesRead + bytesRead;
 
             this.fdPosition = this.fdPosition + bytesRead;
 
             buffers.push(readBuffer);
-        } while (bytesRead && this._searchInBuffer(buffers[buffers.length - 1], this.options.newLineCharacter) === -1);
+        } while (
+            bytesRead &&
+            this._searchInBuffer(buffers[buffers.length - 1], this.options.newLineCharacter) === -1
+        );
 
         let bufferData = Buffer.concat(buffers);
 
@@ -119,14 +121,12 @@ class LineByLine {
     }
 
     next() {
-        let savePosition = this.fdPosition;
         if (!this.fd) return false;
 
         let line = false;
-        let position = 0;
 
         if (this.eofReached && this.linesCache.length === 0) {
-            return { line, position };
+            return line;
         }
 
         let bytesRead;
@@ -137,7 +137,6 @@ class LineByLine {
 
         if (this.linesCache.length) {
             line = this.linesCache.shift();
-            position = this.positionsCache.shift();
 
             const lastLineCharacter = line[line.length - 1];
 
@@ -146,7 +145,6 @@ class LineByLine {
 
                 if (bytesRead) {
                     line = this.linesCache.shift();
-                    position = this.positionsCache.shift();
                 }
             }
         }
@@ -159,44 +157,42 @@ class LineByLine {
             line = line.slice(0, line.length - 1);
         }
 
-        return { line, position };
+        return line;
     }
 }
 
 module.exports = async () => {
+    const sizeChunk = 256;
+    const timestampRE = /[^\d]*['"]?timestamp['"]?\:[ ]*?(\d+)[^\d]*?/;
     const buffer = [];
-    const files = [];
+    const files = [[], []];
     const isFinished = [false, false, false, false];
-    const output = fs.createWriteStream("output.log", {
-        flags: "a",
-        autoClose: true
-    });
+    const fdOutput = fs.openSync("output.log", "a");
 
-    files[0] = new LineByLine("server_1.log");
-    files[1] = new LineByLine("server_2.log");
-    files[2] = new LineByLine("server_3.log");
-    files[3] = new LineByLine("server_4.log");
+    files[0][0] = new LineByLine("server_1.log", { readChunk: sizeChunk });
+    files[0][1] = new LineByLine("server_2.log", { readChunk: sizeChunk });
+    files[0][2] = new LineByLine("server_3.log", { readChunk: sizeChunk });
+    files[0][3] = new LineByLine("server_4.log", { readChunk: sizeChunk });
+    files[1][0] = new LineByLine("server_1.log", { readChunk: sizeChunk });
+    files[1][1] = new LineByLine("server_2.log", { readChunk: sizeChunk });
+    files[1][2] = new LineByLine("server_3.log", { readChunk: sizeChunk });
+    files[1][3] = new LineByLine("server_4.log", { readChunk: sizeChunk });
 
+    let line;
+    let timestamp;
     for (let i = 0; i < 4; i++) {
-        let { line, position } = files[i].next();
-        if (line && line[line.length - 1] === 0x0d) {
-            line = line.slice(0, line.length - 1);
-        }
-
-        // while (line.length === 0 || line[line.length - 1] === 0x0d) {
-        //     ({ line, position } = files[i].next());
-        //     if (line && line[line.length - 1] === 0x0d) {
-        //         line = line.slice(0, line.length - 1);
-        //     }
-        // }
+        line = files[0][i].next();
 
         if (!!line) {
-            const { timestamp } = JSON.parse(line);
-            buffer.push([Number(timestamp), position, i]);
+            timestamp = timestampRE.exec(line)[1];
+            buffer.push([Number(timestamp), 0, i]);
         } else {
             isFinished[i] = true;
         }
     }
+
+    // console.log(buffer);
+    // process.exit();
 
     while (!isFinished.reduce((res, flag) => res && flag, true)) {
         buffer.sort((a, b) => b[0] - a[0] || b[2] - a[2]);
@@ -204,38 +200,33 @@ module.exports = async () => {
         const record = buffer.pop();
 
         const fileNum = record[2];
-        files[fileNum].fdPosition = record[1];
-        files[fileNum].eofReached = false;
 
-        console.log(fileNum, files[fileNum], record[1]);
-        output.write(`${files[fileNum].next().line}\n`);
+        line = files[1][fileNum].next();
+
+        const len = Math.ceil(line.length / sizeChunk);
+        let chunk;
+
+        for (let i = 0; i < len; i++) {
+            chunk = line.slice(i * sizeChunk, i * sizeChunk + sizeChunk);
+            if (i === len - 1) {
+                chunk = `${chunk}\n`;
+            }
+
+            fs.writeSync(fdOutput, chunk);
+        }
 
         if (!isFinished[fileNum]) {
-            let next = files[fileNum].next();
-            if (next) {
-                let { line, position } = next;
+            line = files[0][fileNum].next();
 
-                if (line && line[line.length - 1] === 0x0d) {
-                    line = line.slice(0, line.length - 1);
-                }
+            if (line) {
+                timestamp = timestampRE.exec(line)[1];
 
-                // while (line.length === 0 || line[line.length - 1] === 0x0d) {
-                //     ({ line, position } = files[fileNum].next());
-
-                //     if (line && line[line.length - 1] === 0x0d) {
-                //         line = line.slice(0, line.length - 1);
-                //     }
-                // }
-                if (line) {
-                    const { timestamp } = JSON.parse(line);
-
-                    buffer.push([Number(timestamp), position, fileNum]);
-                }
+                buffer.push([timestamp, 0, fileNum]);
             } else {
                 isFinished[fileNum] = true;
             }
         }
     }
 
-    output.close();
+    fs.closeSync(fdOutput);
 };
