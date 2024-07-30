@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document 490</title>
+        <script src="./index.js"></script>
+        <style>
+            div {
+                width: 10px;
+                height: 10px;
+                background-color: magenta;
+                position: absolute;
+            }
+            div.container {
+                /* box-sizing: border-box; */
+                width: 120px;
+                height: 120px;
+                padding: 10px;
+                background-color: lime;
+                position: relative;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container"></div>
+        <script>
+            const container = document.querySelector(".container");
+            solution(container, 10, (msg) => console.log(msg));
+
+            container.addEventListener("click", () => {
+                const div = document.createElement("div");
+                div.addEventListener("click", (e) => {
+                    console.dir(getComputedStyle(e.target));
+                    // e.target.parentElement.removeChild(e.target);
+                });
+                container.appendChild(div);
+            });
+        </script>
+    </body>
+</html>
