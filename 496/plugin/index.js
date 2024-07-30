@@ -1,10 +1,10 @@
-const postcss = require('./postcss');
-const plugin = require('./plugin');
+const postcss = require("./postcss");
+const plugin = require("./plugin");
 
 const vendorPrefixes = {
-  'display': ['webkit', 'moz'],
-  'border-radius': ['webkit', 'moz', 'ms', 'o'],
-  '::placeholder': ['ms-input', 'moz']
+    display: ["webkit", "moz"],
+    "border-radius": ["webkit", "moz", "ms", "o"],
+    "::placeholder": ["ms-input", "moz"],
 };
 
 const styles = `
@@ -19,16 +19,21 @@ const styles = `
 input::placeholder {
   color: #888;
 }
+.secondary,
+input::placeholder,
+.card::before {
+  color: #888;
+}
 `;
 
-console.log('====== INPUT ======');
+console.log("====== INPUT ======");
 console.log(styles);
-console.log('===================\n');
+console.log("===================\n");
 
-postcss([plugin({vendorPrefixes})])
-  .process(styles)
-  .then((result) => {
-    console.log('====== OUTPUT ======');
-    console.log(result.css);
-    console.log('====================');
-  });
+postcss([plugin({ vendorPrefixes })])
+    .process(styles)
+    .then((result) => {
+        console.log("====== OUTPUT ======");
+        console.log(result.css);
+        console.log("====================");
+    });
