@@ -1,0 +1,200 @@
+<html>
+
+<head>
+    <style>
+        .root {
+            display: grid;
+            grid-template-columns: 40px repeat(5, 245px);
+            gap: 15px;
+        }
+
+        .wrapper {
+            background-color: #eee;
+            padding: 5px;
+        }
+
+        .day {
+            position: relative;
+        }
+
+        .event {
+            background-color: khaki;
+            border: 1px solid yellowgreen;
+            border-radius: 8px;
+            position: absolute;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .timeline {
+            text-align: right;
+        }
+
+        .timeline>div {
+            height: 30px
+        }
+
+        .timeline>div:nth-child(2n+1) {
+            color: #ccc
+        }
+    </style>
+</head>
+
+<body>
+    <div class="root">
+        <div class="timeline">
+            <div></div>
+            <div>9:00</div>
+            <div>9:30</div>
+            <div>10:00</div>
+            <div>10:30</div>
+            <div>11:00</div>
+            <div>11:30</div>
+            <div>12:00</div>
+            <div>12:30</div>
+            <div>13:00</div>
+            <div>13:30</div>
+            <div>14:00</div>
+            <div>14:30</div>
+            <div>15:00</div>
+            <div>15:30</div>
+            <div>16:00</div>
+            <div>16:30</div>
+            <div>17:00</div>
+            <div></div>
+        </div>
+        <div class="wrapper">
+            <div class="day">
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="day">
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="day">
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="day">
+            </div>
+        </div>
+        <div class="wrapper">
+            <div class="day">
+            </div>
+        </div>
+    </div>
+    <br />
+
+</body>
+
+<script>
+    const exampleInput = [
+        { "start": 1697428800, "finish": 1697443200 },
+        { "start": 1697443800, "finish": 1697458200 },
+        { "start": 1697428800, "finish": 1697431800 },
+        { "start": 1697442000, "finish": 1697445000 },
+        { "start": 1697429400, "finish": 1697443200 },
+        { "start": 1697443800, "finish": 1697458200 },
+        { "start": 1697515200, "finish": 1697531400 },
+        { "start": 1697517000, "finish": 1697521200 },
+        { "start": 1697519400, "finish": 1697524200 },
+        { "start": 1697524800, "finish": 1697529000 },
+        { "start": 1697532000, "finish": 1697544600 },
+        { "start": 1697532000, "finish": 1697538000 },
+        { "start": 1697537400, "finish": 1697544600 },
+        { "start": 1697603400, "finish": 1697608800 },
+        { "start": 1697605200, "finish": 1697611200 },
+        { "start": 1697607000, "finish": 1697631000 },
+        { "start": 1697608200, "finish": 1697621400 },
+        { "start": 1697697000, "finish": 1697701800 },
+        { "start": 1697699400, "finish": 1697701800 },
+        { "start": 1697702700, "finish": 1697703300 },
+        { "start": 1697703600, "finish": 1697708400 },
+        { "start": 1697706900, "finish": 1697707800 },
+        { "start": 1697702880, "finish": 1697704380 },
+        { "start": 1697703000, "finish": 1697706600 },
+        { "start": 1697702400, "finish": 1697717400 },
+        { "start": 1697702400, "finish": 1697709900 },
+        { "start": 1697774400, "finish": 1697790600 },
+        { "start": 1697774400, "finish": 1697776200 },
+        { "start": 1697778000, "finish": 1697781600 },
+        { "start": 1697774700, "finish": 1697779800 },
+        { "start": 1697775600, "finish": 1697779800 },
+        { "start": 1697782200, "finish": 1697784000 }
+    ]
+
+    const expectedOutput = [
+        { day: 1, height: 240, width: 75, top: 30, left: 0 },
+        { day: 1, height: 240, width: 75, top: 280, left: 0 },
+        { day: 1, height: 50, width: 75, top: 30, left: 80 },
+        { day: 1, height: 50, width: 75, top: 250, left: 80 },
+        { day: 1, height: 230, width: 75, top: 40, left: 160 },
+        { day: 1, height: 240, width: 75, top: 280, left: 160 },
+
+        { day: 2, height: 270, width: 75, top: 30, left: 0 },
+        { day: 2, height: 70, width: 75, top: 60, left: 80 },
+        { day: 2, height: 80, width: 75, top: 100, left: 160 },
+        { day: 2, height: 70, width: 155, top: 190, left: 80 },
+        { day: 2, height: 210, width: 75, top: 310, left: 0 },
+        { day: 2, height: 100, width: 75, top: 310, left: 80 },
+        { day: 2, height: 120, width: 75, top: 400, left: 160 },
+
+        { day: 3, height: 90, width: 55, top: 60, left: 0 },
+        { day: 3, height: 100, width: 55, top: 90, left: 60 },
+        { day: 3, height: 400, width: 55, top: 120, left: 120 },
+        { day: 3, height: 220, width: 55, top: 140, left: 180 },
+
+        { day: 4, height: 80, width: 115, top: 180, left: 0 },
+        { day: 4, height: 40, width: 115, top: 220, left: 120 },
+        { day: 4, height: 10, width: 43, top: 275, left: 96 },
+        { day: 4, height: 80, width: 43, top: 290, left: 96 },
+        { day: 4, height: 15, width: 91, top: 345, left: 144 },
+        { day: 4, height: 25, width: 43, top: 278, left: 144 },
+        { day: 4, height: 60, width: 43, top: 280, left: 192 },
+        { day: 4, height: 250, width: 43, top: 270, left: 0 },
+        { day: 4, height: 125, width: 43, top: 270, left: 48 },
+
+        { day: 5, height: 270, width: 55, top: 30, left: 0 },
+        { day: 5, height: 30, width: 55, top: 30, left: 60 },
+        { day: 5, height: 60, width: 55, top: 90, left: 60 },
+        { day: 5, height: 85, width: 55, top: 35, left: 120 },
+        { day: 5, height: 70, width: 55, top: 50, left: 180 },
+        { day: 5, height: 30, width: 175, top: 160, left: 60 },
+    ]
+
+
+    // INPUT your code here
+    const solution = (list, config = {
+        dayWidth: 235,
+        gap: 5,
+        startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
+    }) => {
+
+        return expectedOutput
+    }
+
+
+    // draw blocks
+    window.addEventListener('load', () => {
+        const blocks = solution(exampleInput);
+
+        const days = document.getElementsByClassName('day');
+
+        for (let i = 0; i < days.length; i++) {
+            blocks.filter(block => block.day === i + 1).forEach(block => {
+                const div = document.createElement('div');
+                div.classList.add('event');
+                div.style = `
+                    height: ${block.height};
+                    width: ${block.width};
+                    top: ${block.top};
+                    left: ${block.left};
+                `;
+                days[i].appendChild(div);
+            })
+        }
+    })
+</script>
+
+</html>
