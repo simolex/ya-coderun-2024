@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            body {
+                --background: #fef9ef;
+                --border: #222;
+                font-family: Arial, sans-serif;
+                background-color: var(--background);
+            }
+            .btn {
+                color: var(--border);
+                min-width: 150px;
+                line-height: 40px;
+                font-size: 12px;
+                font-weight: 900;
+                letter-spacing: 3px;
+                text-transform: inherit;
+                background-color: var(--background);
+                position: relative;
+                border: 5px solid var(--color);
+                box-shadow: 1px 1px 0, 2px 2px 0, 3px 3px 0, 4px 4px 0,
+                    5px 5px 0;
+            }
+            .btn:hover {
+                top: 1px;
+                left: 1px;
+                box-shadow: 1px 1px 0, 2px 2px 0, 3px 3px 0, 4px 4px 0;
+            }
+            .btn:active {
+                top: 5px;
+                left: 5px;
+                box-shadow: 0 0 0 0;
+            }
+            .btn::before {
+                content: "";
+                background-color: var(--color);
+                position: absolute;
+                opacity: 0.3;
+                inset: 0;
+                right: 100%;
+            }
+            @keyframes timer {
+                from {
+                    right: 0;
+                }
+                to {
+                    right: 100%;
+                }
+            }
+            .btn.animated::before {
+                animation: timer var(--time) linear;
+            }
+
+            #layout {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            #lamp {
+                width: 40px;
+                height: 40px;
+                background-color: var(--background);
+                border: solid 5px var(--border);
+            }
+            #lamp.highlighted {
+                background-color: tomato;
+            }
+            pre,
+            hr {
+                margin: 0;
+                width: 150px;
+            }
+            hr {
+                border-color: var(--border);
+            }
+            pre {
+                line-height: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="layout">
+            <button class="btn" time="4000" color="#fe6d73">Петя</button>
+            <button class="btn" time="3000" color="#ffcb77">Коля</button>
+            <button class="btn" time="2000" color="#17c3b2">Саша</button>
+            <button class="btn" time="1000" color="#227c9d">Миша</button>
+            <div id="lamp"></div>
+            <hr />
+        </div>
+
+        <script>
+            function solution(callback) {
+                // Your code here
+            }
+
+            const [add, remove] = solution(report) || [];
+
+            document.querySelectorAll(".btn").forEach((btn) => {
+                const color = btn.getAttribute("color");
+                const time = Number(btn.getAttribute("time"));
+
+                btn.style.setProperty("--color", color);
+                btn.style.setProperty("--time", `${time}ms`);
+
+                let counter = 0;
+                const name = btn.innerHTML;
+                btn.innerHTML = `${name} [${counter}]`;
+
+                const onClick = add?.(name, time);
+
+                btn.addEventListener("click", () => {
+                    counter++;
+                    onClick?.(counter);
+                    if (counter > 10) remove?.(name);
+
+                    btn.innerHTML = `${name} [${counter}]`;
+                    btn.classList.remove("animated");
+                    requestAnimationFrame(() => btn.classList.add("animated"));
+                });
+            });
+
+            function report(data) {
+                // Add report
+                const pre = document.createElement("pre");
+                pre.innerText = JSON.stringify(data, null, 1).slice(2, -2);
+                document.getElementById("layout").appendChild(pre);
+
+                // Blink
+                const lamp = document.getElementById("lamp");
+                lamp.classList.add("highlighted");
+                setTimeout(() => {
+                    lamp.classList.remove("highlighted");
+                }, 100);
+            }
+        </script>
+    </body>
+</html>
