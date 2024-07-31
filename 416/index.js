@@ -8,15 +8,15 @@ function invite(n, friends) {
     const positive = [];
     const negative = new Map();
 
-    friends.forEach((f, i) => {
-        if (f < 0) {
-            const favorite = -1 * f;
+    friends.forEach((needCount, i) => {
+        if (needCount < 0) {
+            const favorite = -1 * needCount;
             if (!negative.has(favorite)) {
                 negative.set(favorite, []);
             }
             negative.get(favorite).push(i + 1);
         } else {
-            positive.push({ needCount: f, position: i + 1 });
+            positive.push({ needCount, position: i + 1 });
         }
     });
     positive.sort((a, b) => a["needCount"] - b["needCount"]);
@@ -24,11 +24,11 @@ function invite(n, friends) {
     let countInvited = 0;
 
     for (let friend of positive) {
-        result.push(friend.position);
-
         if (friend.needCount > countInvited) {
             return [];
         }
+
+        result.push(friend.position);
 
         if (negative.has(friend.position)) {
             const stack = [friend.position];
@@ -37,12 +37,10 @@ function invite(n, friends) {
                 const friendPosition = stack.pop();
 
                 if (negative.has(friendPosition)) {
-                    negative.get(friendPosition).forEach((negFriend, index, arr) => {
+                    negative.get(friendPosition).forEach((negFriend) => {
                         stack.push(negFriend);
                         result.push(negFriend);
                         countInvited++;
-
-                        arr[index] = 0;
                     });
                     negative.delete(friendPosition);
                 }
