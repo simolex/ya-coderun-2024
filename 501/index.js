@@ -1,14 +1,21 @@
 module.exports = {
     get(target, property, receiver) {
+        const targetValue = Reflect.get(target, property, receiver);
+
         if (property in target) {
             if (property.charAt(0) === "_") {
                 return false;
             }
 
-            if (typeof target[property] === "function") {
-                return target[property].bind(target);
+            if (typeof targetValue === "function") {
+                if (property === "phone") {
+                    return targetValue.apply(target, arguments);
+                }
+                return function () {
+                    return targetValue.apply(target, arguments);
+                };
             }
-            return Reflect.get(target, property, receiver).value;
+            return targetValue.value;
         }
         return false;
     },
@@ -62,5 +69,7 @@ module.exports = {
         return Object.keys(target).filter((key) => key.charAt(0) !== "_");
     },
 
-    apply(target, thisArg, argumentsList) {},
+    apply(target, thisArg, argumentsList) {
+        Reflect.apply(target, thisArg, argumentsList);
+    }
 };
