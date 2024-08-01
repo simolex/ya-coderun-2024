@@ -22,8 +22,7 @@
                 background-color: var(--background);
                 position: relative;
                 border: 5px solid var(--color);
-                box-shadow: 1px 1px 0, 2px 2px 0, 3px 3px 0, 4px 4px 0,
-                    5px 5px 0;
+                box-shadow: 1px 1px 0, 2px 2px 0, 3px 3px 0, 4px 4px 0, 5px 5px 0;
             }
             .btn:hover {
                 top: 1px;
@@ -95,7 +94,68 @@
 
         <script>
             function solution(callback) {
-                // Your code here
+                let chats = {};
+                let timers = {};
+                let idMessage = 0;
+                let allTimeouts = {};
+
+                const AddTimeout = (chatName, timeoutMs) => {
+                    const thisChatName = chatName;
+
+                    allTimeouts[chatName] = timeoutMs;
+
+                    if (timeoutMs > 0) {
+                        timers[thisChatName] = new Map();
+                    }
+
+                    const onMessage = (msg) => {
+                        if (allTimeouts[thisChatName] > 0) {
+                            chats[thisChatName] = msg;
+
+                            idMessage++;
+
+                            const hTimeout = setTimeout(
+                                sendNotification,
+                                allTimeouts[thisChatName],
+                                thisChatName,
+                                idMessage
+                            );
+                            timers[thisChatName].set(idMessage, hTimeout);
+                        }
+                    };
+
+                    return onMessage;
+                };
+
+                const RemoveTimeout = (chatName) => {
+                    delete chats[chatName];
+
+                    if (timers[chatName]) {
+                        timers[chatName].forEach((handler) => clearTimeout(handler));
+
+                        delete timers[chatName];
+
+                        allTimeouts[chatName] = 0;
+                    }
+                };
+
+                const sendNotification = (chatName, idMessage) => {
+                    if (timers[chatName]) {
+                        timers[chatName].delete(idMessage);
+                    }
+
+                    if (
+                        Object.keys(timers).reduce(
+                            (count, chatName) => count + timers[chatName].size,
+                            0
+                        ) === 0
+                    ) {
+                        callback(chats);
+                        chats = {};
+                    }
+                };
+
+                return [AddTimeout, RemoveTimeout];
             }
 
             const [add, remove] = solution(report) || [];
