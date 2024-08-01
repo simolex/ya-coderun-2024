@@ -41,7 +41,8 @@ const detectDangerousWave = ({ distanceToLighthouse, distanceToBuoy, wavesFinish
             reachedWave.get(normTime).reachTime = waves[i].reachTime;
         }
         reachedWave.forEach((wave) => {
-            if (wave.height >= 5) {
+            if (wave.height >= 5 && distance_LighthouseToBuoy > 0) {
+                ///??????
                 dangerousWave.push({ reachTime: wave.reachTime / distance_LighthouseToBuoy, height: wave.height });
             }
         });
