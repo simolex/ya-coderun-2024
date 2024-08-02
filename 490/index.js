@@ -1,23 +1,46 @@
 function solution(container, size, onEnd) {
-    const { boxSizing, padding, height, width } = getComputedStyle(container);
+    const { padding } = getComputedStyle(container);
+    const sizePadding = Number.parseInt(padding);
+    const { left, top, width, height } = container.getBoundingClientRect();
 
-    console.dir(container.getBoundingClientRect());
+    const contentLeft = left + sizePadding;
+    const contentTop = top + sizePadding;
+    const contentWidth = width - sizePadding * 2;
+    const contentHeight = height - sizePadding * 2;
+
+    const cellWidth = contentWidth / size;
+    const cellHeight = contentHeight / size;
 
     const board = Array(size * size).fill(null);
 
+    const getBoardIndex = (rect) => {
+        const { left: leftDiv, top: topDiv, right: rightDiv, bottom: bottomDiv } = rect;
+
+        const centerAxisX = (leftDiv + rightDiv) / 2 - contentLeft;
+        const centerAxisY = (topDiv + bottomDiv) / 2 - contentTop;
+
+        return Math.floor(centerAxisX / cellWidth) + Math.floor(centerAxisY / cellHeight) * size;
+    };
+
+    const readMessage = () => board.filter((v) => v !== null).join("");
+
     const config = {
         childList: true,
-        subtree: true
+        subtree: true,
     };
 
     const callback = function (mutationsList, observer) {
         for (let mutation of mutationsList) {
             if (mutation.type === "childList") {
-                console.log("A child node has been added or removed.");
-                console.log("added", mutation.addedNodes);
-                mutation.addedNodes.forEach((el) => console.dir(el.getBoundingClientRect()));
-                console.log("removed", mutation.removedNodes);
-                mutation.removedNodes.forEach((el) => console.dir(getComputedStyle(el)));
+                mutation.addedNodes.forEach((el) => {
+                    const index = getBoardIndex(el.getBoundingClientRect());
+                    const content = el.innerText;
+                    board[index] = content;
+                    if (content === ".") {
+                        const message = readMessage();
+                        onEnd(message);
+                    }
+                });
             }
         }
     };
@@ -25,6 +48,4 @@ function solution(container, size, onEnd) {
     const observer = new MutationObserver(callback);
 
     observer.observe(container, config);
-
-    onEnd("is Ended");
 }

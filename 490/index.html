@@ -15,8 +15,8 @@
             }
             div.container {
                 /* box-sizing: border-box; */
-                width: 120px;
-                height: 120px;
+                width: 100px;
+                height: 100px;
                 padding: 10px;
                 background-color: lime;
                 position: relative;
@@ -31,6 +31,7 @@
 
             container.addEventListener("click", () => {
                 const div = document.createElement("div");
+                div.innerText = "a";
                 div.addEventListener("click", (e) => {
                     console.dir(getComputedStyle(e.target));
                     // e.target.parentElement.removeChild(e.target);
