@@ -25,7 +25,7 @@ const cyrToLat = {
     Q: "Щ",
     X: "Ь",
     X: "Ъ",
-    Y: "Ы"
+    Y: "Ы",
 };
 const alphabetMorze = {
     А: ".-",
@@ -70,7 +70,7 @@ const alphabetMorze = {
     7: "--…",
     8: "---..",
     9: "----.",
-    0: "-----"
+    0: "-----",
 };
 
 const charToToken = (letter) => {
@@ -127,7 +127,11 @@ class Queue {
 
 class TransmitterUI {
     needWork = true;
-    constructor(transmitter, { shortSignalPause, longSignalPause, charPause, wordPause }, messageQueue) {
+    constructor(
+        transmitter,
+        { shortSignalPause, longSignalPause, charPause, wordPause },
+        messageQueue
+    ) {
         this.messageQueue = messageQueue;
         this.transmitter = transmitter;
 
@@ -137,15 +141,23 @@ class TransmitterUI {
         this.wordPause = wordPause;
 
         this.actions = {
-            short: () => [() => this._startSignal(), () => setPause(this.shortPausePromise), () => this._stopSignal()],
+            short: () => [
+                () => this._startSignal(),
+                () => setPause(this.shortPausePromise),
+                () => this._stopSignal(),
+            ],
 
-            long: () => [() => this._startSignal(), () => setPause(this.longPausePromise), () => this._stopSignal()],
-            pause: () => [() => setPause(this.charPausePromise)]
+            long: () => [
+                () => this._startSignal(),
+                () => setPause(this.longPausePromise),
+                () => this._stopSignal(),
+            ],
+            pause: () => [() => setPause(this.charPausePromise)],
         };
     }
 
     stopWork() {
-        needWork = false;
+        this.needWork = false;
     }
 
     _startSignal() {
@@ -212,18 +224,28 @@ class TransmitterUI {
         return task;
     }
 
-    async loop(stop) {
-        while (this.needWork) {
-            if (this.messageQueue.size() > 0) {
-                const incomingMessage = this.messageQueue.pop();
+    async loop(stop, isStart) {
+        while (this.messageQueue.size() === 0 && this.needWork) {
+            //pause
+        }
 
-                if (incomingMessage.length > 0) {
-                    this.sendMessage(incomingMessage);
-                    this.pointerQueue++;
-                }
+        if (this.messageQueue.size() > 0) {
+            const incomingMessage = this.messageQueue.pop();
+
+            if (incomingMessage.length > 0) {
+                this.pointerQueue++;
+                this.sendMessage(incomingMessage);
             }
         }
-        stop();
+
+        if (!this.needWork) {
+            return this.stopper();
+        }
+        console.log("tick");
+
+        if (isStart) {
+            this.stopper = stop;
+        }
     }
 }
 
@@ -233,6 +255,7 @@ module.exports = async function result(
     { shortSignalPause = 500, longSignalPause = 1000, charPause = 200, wordPause = 2000 }
 ) {
     const messages = new Queue();
+
     UIs = [];
     for (let transmitter of transmitters) {
         const ui = new TransmitterUI(
@@ -241,7 +264,7 @@ module.exports = async function result(
                 shortSignalPause,
                 longSignalPause,
                 charPause,
-                wordPause
+                wordPause,
             },
             messages
         );
@@ -258,7 +281,8 @@ module.exports = async function result(
         };
     }
 
-    const w = UIs.map((ui) => new Promise((res) => ui.loop(res)));
+    const w = UIs.map((ui) => new Promise((res) => ui.loop(res, true)));
     console.log(w);
     await Promise.all(w);
+    console.log("finish");
 };
