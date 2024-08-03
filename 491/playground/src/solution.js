@@ -25,7 +25,7 @@ const cyrToLat = {
     Q: "Щ",
     X: "Ь",
     X: "Ъ",
-    Y: "Ы",
+    Y: "Ы"
 };
 const alphabetMorze = {
     А: ".-",
@@ -70,7 +70,7 @@ const alphabetMorze = {
     7: "--…",
     8: "---..",
     9: "----.",
-    0: "-----",
+    0: "-----"
 };
 
 const charToToken = (letter) => {
@@ -91,16 +91,15 @@ const charToToken = (letter) => {
         .split(" ");
 };
 
-const setPause = (_ms) => {
-    const ms = _ms;
+const setPause = (ms, ...params) => {
     return new Promise((res) => {
-        setTimeout(res, ms, "true");
+        setTimeout(res, ms, ...params);
     });
 };
 
-function queue(fnArray, onError, initialData) {
-    return fnArray.reduce((p, f) => p.then(f), Promise.resolve(initialData)).catch(onError);
-}
+// function queuePromises(fnArray, initialPromise) {
+//     return ;
+// }
 
 class Queue {
     constructor() {
@@ -125,129 +124,111 @@ class Queue {
     }
 }
 
-class TransmitterUI {
-    needWork = true;
-    constructor(
-        transmitter,
-        { shortSignalPause, longSignalPause, charPause, wordPause },
-        messageQueue
-    ) {
-        this.messageQueue = messageQueue;
-        this.transmitter = transmitter;
+const actions = {
+    short: [
+        (TMObject) => _startSignal(TMObject),
+        (TMObject) => setPause(TMObject.params.shortSignalPause, TMObject),
+        (TMObject) => _stopSignal(TMObject)
+    ],
+    long: [
+        (TMObject) => _startSignal(TMObject),
+        (TMObject) => setPause(TMObject.params.longSignalPause, TMObject),
+        (TMObject) => _stopSignal(TMObject)
+    ],
+    pause: [(TMObject) => setPause(TMObject.params.charPause, TMObject)]
+};
 
-        this.shortPausePromise = shortSignalPause;
-        this.longPausePromise = longSignalPause;
-        this.charPausePromise = charPause;
-        this.wordPause = wordPause;
+const _startSignal = function (TMObject) {
+    return new Promise((resolve, rej) => {
+        TMObject.transmitter.taskRunner(() =>
+            Promise.all([TMObject.transmitter.F(), TMObject.transmitter.D()])
+                .then(() => resolve(TMObject))
+                .catch(rej)
+        );
+    });
+};
+const _stopSignal = function (TMObject) {
+    return new Promise((resolve, rej) => {
+        TMObject.transmitter.taskRunner(() =>
+            Promise.all([TMObject.transmitter.B(), TMObject.transmitter.U()])
+                .then(() => resolve(TMObject))
+                .catch(rej)
+        );
+    });
+};
 
-        this.actions = {
-            short: () => [
-                () => this._startSignal(),
-                () => setPause(this.shortPausePromise),
-                () => this._stopSignal(),
-            ],
+const _charToSignal = function (TMObject, letter) {
+    console.log("_charToSignal", TMObject, letter); //DEBUG
+    const tokens = charToToken(letter);
 
-            long: () => [
-                () => this._startSignal(),
-                () => setPause(this.longPausePromise),
-                () => this._stopSignal(),
-            ],
-            pause: () => [() => setPause(this.charPausePromise)],
-        };
+    const actionPromises = tokens.reduce((resolve, token) => resolve.concat(actions[token]), []);
+    return actionPromises.reduce((prev, f) => prev.then((TM) => f(TM)), Promise.resolve(TMObject));
+};
+
+const _sendWord = function (TMObject, word) {
+    const letters = word.trim().split("");
+    const fromTwoLetter = letters.slice(1);
+
+    const pauseAndLetterPromise = (TM, letter) =>
+        Promise.resolve(TM)
+            .then((TM) => setPause(TM.params.charPause, TM))
+            .then((TM) => _charToSignal(TM, letter));
+
+    const trySendWord = function (TMObject, letters) {
+        console.log("try", TMObject, letters); //DEBUG
+        return Promise.resolve(TMObject)
+            .then((TM) => _charToSignal(TM, letters[0]))
+            .then((TM) =>
+                fromTwoLetter.reduce((prev, l) => prev.then((TM) => pauseAndLetterPromise(TM, l)), Promise.resolve(TM))
+            )
+            .catch((e) => {
+                console.error("error", e); //DEBUG
+                return trySendWord(TMObject, letters);
+            });
+    };
+
+    return trySendWord(TMObject, letters).then((TM) => setPause(TM.params.wordPause, TM));
+};
+
+const sendMessage = function (TMObject, message) {
+    const wordOfMessage = message
+        .trim()
+        .split(" ")
+        .filter((word) => word.length > 0);
+
+    return TMObject.transmitter
+        .init()
+        .then(() => TMObject)
+        .then((TM) => setPause(TM.params.wordPause, TM))
+        .then((TM) => wordOfMessage.reduce((prev, word) => prev.then((TM) => _sendWord(TM, word)), Promise.resolve(TM)))
+        .then((TM) => setPause(TM.params.wordPause, TM))
+        .then((TM) => TM.transmitter.reset());
+};
+
+const loop = async function (TMObject, stop, isStart) {
+    while (transmitter.messageQueue.size() === 0 && this.needWork) {
+        //pause
     }
 
-    stopWork() {
-        this.needWork = false;
-    }
+    if (transmitter.messageQueue.size() > 0) {
+        const incomingMessage = transmitter.messageQueue.pop();
 
-    _startSignal() {
-        return new Promise((res, rej) => {
-            this.transmitter.taskRunner(() =>
-                Promise.all([this.transmitter.F(), this.transmitter.D()]).then(res).catch(rej)
-            );
-        });
-    }
-    _stopSignal() {
-        return new Promise((res, rej) => {
-            this.transmitter.taskRunner(() =>
-                Promise.all([this.transmitter.B(), this.transmitter.U()]).then(res).catch(rej)
-            );
-        });
-    }
-
-    _charToSignal(letter) {
-        const tokens = charToToken(letter);
-        const actions = tokens.reduce((p, t) => p.concat(this.actions[t]()), []);
-
-        return queue(actions, "", []);
-    }
-
-    async _sendWord(word) {
-        const letters = word.trim().split("");
-        let wordSended = false;
-
-        let task; // = await setPause(this.wordPause);
-        while (!wordSended) {
-            try {
-                if (letters.length > 0) {
-                    task = await this._charToSignal(letters[0]);
-                }
-                for (let i = 1; i < letters.length; i++) {
-                    task = await setPause(this.charPausePromise);
-                    task = await this._charToSignal(letters[i]);
-                }
-                wordSended = true;
-            } catch (e) {
-                wordSended = false;
-            }
-        }
-        task = await setPause(this.wordPause);
-
-        return task;
-    }
-
-    async sendMessage(msg) {
-        msg = msg
-            .trim()
-            .split(" ")
-            .filter((word) => word.length > 0);
-
-        let task = await this.transmitter.init();
-        task = await setPause(this.wordPause);
-
-        for (let word of msg) {
-            task = await this._sendWord(word);
-        }
-
-        task = await this.transmitter.reset();
-
-        return task;
-    }
-
-    async loop(stop, isStart) {
-        while (this.messageQueue.size() === 0 && this.needWork) {
-            //pause
-        }
-
-        if (this.messageQueue.size() > 0) {
-            const incomingMessage = this.messageQueue.pop();
-
-            if (incomingMessage.length > 0) {
-                this.pointerQueue++;
-                this.sendMessage(incomingMessage);
-            }
-        }
-
-        if (!this.needWork) {
-            return this.stopper();
-        }
-        console.log("tick");
-
-        if (isStart) {
-            this.stopper = stop;
+        if (incomingMessage.length > 0) {
+            this.pointerQueue++;
+            this.sendMessage(incomingMessage);
         }
     }
-}
+
+    if (!this.needWork) {
+        return this.stopper();
+    }
+    console.log("tick");
+
+    if (isStart) {
+        this.stopper = stop;
+    }
+};
+// }
 
 module.exports = async function result(
     socket,
@@ -256,33 +237,35 @@ module.exports = async function result(
 ) {
     const messages = new Queue();
 
-    UIs = [];
+    const listTMObjects = [];
     for (let transmitter of transmitters) {
-        const ui = new TransmitterUI(
+        listTMObjects.push({
             transmitter,
-            {
+            params: {
                 shortSignalPause,
                 longSignalPause,
                 charPause,
-                wordPause,
+                wordPause
             },
             messages
-        );
-
-        UIs.push(ui);
+        });
     }
 
     if (transmitters.length > 0) {
         socket.onmessage = async (e) => {
             messages.push(String(e.data));
         };
+
         socket.onclose = async (e) => {
             UIs.forEach((ui) => ui.stopWork());
         };
     }
 
-    const w = UIs.map((ui) => new Promise((res) => ui.loop(res, true)));
-    console.log(w);
-    await Promise.all(w);
-    console.log("finish");
+    const result = sendMessage(transmitterObject, "hello word").then(console.log);
+    console.log(result);
+
+    // const w = UIs.map((ui) => new Promise((res) => ui.loop(res, true)));
+    // console.log(w);
+    // await Promise.all(w);
+    // console.log("finish");
 };
