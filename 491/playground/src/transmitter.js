@@ -32,8 +32,7 @@ export class Transmitter {
         const dif = this.date ? new Date() - this.date : 0;
 
         if (dif > 1500 && this.logs[this.logs.length - 1] !== "E") {
-            // this.result.textContent += " ";
-            this.result.textContent += "@";
+            this.result.textContent += " ";
         }
 
         if (last === "FD" || last === "DF") {
@@ -57,8 +56,7 @@ export class Transmitter {
             }
         }
         if (move === "R") {
-            // this.result.textContent += "| ";
-            this.result.textContent += "|@";
+            this.result.textContent += "| ";
         }
     }
 
@@ -75,8 +73,7 @@ export class Transmitter {
 
                     this.result.textContent = this.result.textContent.slice(
                         0,
-                        // this.result.textContent.lastIndexOf(" ") + 1
-                        this.result.textContent.lastIndexOf("@") + 1
+                        this.result.textContent.lastIndexOf(" ") + 1
                     );
                     rej("Произошла ошибка, TaskRunner сброшен");
                 }
