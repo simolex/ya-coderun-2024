@@ -97,10 +97,6 @@ const setPause = (ms, ...params) => {
     });
 };
 
-// function queuePromises(fnArray, initialPromise) {
-//     return ;
-// }
-
 class Queue {
     constructor() {
         this.queue = [];
@@ -158,7 +154,6 @@ const _stopSignal = function (TMObject) {
 };
 
 const _charToSignal = function (TMObject, letter) {
-    console.log("_charToSignal", TMObject, letter); //DEBUG
     const tokens = charToToken(letter);
 
     const actionPromises = tokens.reduce((resolve, token) => resolve.concat(actions[token]), []);
@@ -175,14 +170,12 @@ const _sendWord = function (TMObject, word) {
             .then((TM) => _charToSignal(TM, letter));
 
     const trySendWord = function (TMObject, letters) {
-        console.log("try", TMObject, letters); //DEBUG
         return Promise.resolve(TMObject)
             .then((TM) => _charToSignal(TM, letters[0]))
             .then((TM) =>
                 fromTwoLetter.reduce((prev, l) => prev.then((TM) => pauseAndLetterPromise(TM, l)), Promise.resolve(TM))
             )
             .catch((e) => {
-                console.error("error", e); //DEBUG
                 return trySendWord(TMObject, letters);
             });
     };
@@ -199,36 +192,29 @@ const sendMessage = function (TMObject, message) {
     return TMObject.transmitter
         .init()
         .then(() => TMObject)
-        .then((TM) => setPause(TM.params.wordPause, TM))
         .then((TM) => wordOfMessage.reduce((prev, word) => prev.then((TM) => _sendWord(TM, word)), Promise.resolve(TM)))
-        .then((TM) => setPause(TM.params.wordPause, TM))
-        .then((TM) => TM.transmitter.reset());
+        .then((TM) => TM.transmitter.reset())
+        .then(() => TMObject);
 };
 
-const loop = async function (TMObject, stop, isStart) {
-    while (transmitter.messageQueue.size() === 0 && this.needWork) {
-        //pause
-    }
-
-    if (transmitter.messageQueue.size() > 0) {
-        const incomingMessage = transmitter.messageQueue.pop();
-
-        if (incomingMessage.length > 0) {
-            this.pointerQueue++;
-            this.sendMessage(incomingMessage);
-        }
-    }
-
-    if (!this.needWork) {
-        return this.stopper();
-    }
-    console.log("tick");
-
+const loop = function (TMObject, stopResolve, isStart) {
     if (isStart) {
-        this.stopper = stop;
+        TMObject["stopper"] = stopResolve;
     }
+
+    return Promise.resolve(TMObject).then((TMObject) => {
+        if (TMObject.messages.size() > 0) {
+            const incomingMessage = TMObject.messages.pop();
+
+            if (incomingMessage.length > 0) {
+                TMObject.messages.pointerQueue++;
+                return sendMessage(TMObject, incomingMessage).then(() => loop(TMObject));
+            }
+        }
+
+        TMObject.stopper();
+    });
 };
-// }
 
 module.exports = async function result(
     socket,
@@ -247,25 +233,24 @@ module.exports = async function result(
                 charPause,
                 wordPause
             },
-            messages
+            messages,
+            existSession: true
         });
     }
 
+    const TMPromises = [];
+
     if (transmitters.length > 0) {
-        socket.onmessage = async (e) => {
+        socket.onmessage = (e) => {
             messages.push(String(e.data));
+            if (TMPromises.length < transmitters.length) {
+                const currentTM = TMPromises.length;
+                TMPromises[currentTM] = new Promise((stopResolve) => loop(listTMObjects[currentTM], stopResolve, true));
+            }
         };
 
-        socket.onclose = async (e) => {
-            UIs.forEach((ui) => ui.stopWork());
+        socket.onclose = (e) => {
+            listTMObjects.forEach((TM) => (TM.existSession = false));
         };
     }
-
-    const result = sendMessage(transmitterObject, "hello word").then(console.log);
-    console.log(result);
-
-    // const w = UIs.map((ui) => new Promise((res) => ui.loop(res, true)));
-    // console.log(w);
-    // await Promise.all(w);
-    // console.log("finish");
 };
