@@ -39,7 +39,7 @@ function createPrimitiveType(list) {
         }
     }
 
-    return result.length > 0 ? result.join("|") : "";
+    return result.length > 0 ? result.join(" | ") : "";
 }
 
 function solution(records) {
@@ -92,7 +92,7 @@ function solution(records) {
 
     resultType.push(createPrimitiveType([...allPrimitives.values()]));
 
-    return resultType.filter((str) => str.length > 0).join("|");
+    return resultType.filter((str) => str.length > 0).join(" | ");
 }
 
 module.exports = solution;
