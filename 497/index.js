@@ -39,181 +39,60 @@ function createPrimitiveType(list) {
         }
     }
 
-    return result.join("|");
+    return result.length > 0 ? result.join("|") : "";
 }
 
-function solution(values) {
+function solution(records) {
     const allKeys = new Set();
     const allPrimitives = new Set();
+    const indexAllObjects = [];
 
-    for (const item of values) {
+    records.forEach((item, index) => {
         if (typeof item !== "object" || item === null) {
             allPrimitives.add(item);
-            continue;
+        } else {
+            for (const key in item) {
+                allKeys.add(key);
+            }
+            indexAllObjects.push(index);
         }
-
-        for (const key in item) {
-            allKeys.add(key);
-        }
-    }
+    });
 
     const keyPattern = [...allKeys.keys()];
     keyPattern.sort();
 
-    const createObjectType = (patternKey, patternBody) => {
-        const result = [];
-        const negativePattern = JSON.parse(patternKey);
-        const listPartials = new Set();
-
-        keyPattern.forEach((v, i) => {
-            if (negativePattern[i] === 1) {
-                const typeField = createPrimitiveType([...patternBody.scope.get(v).values()]);
-                result.push(`${v}: ${typeField}`);
-            }
-        });
-
-        const allPatternBody = new Set(patternBody.patterns);
-        for (let body of allPatternBody.values()) {
-            const originPattern = JSON.parse(body);
-            keyPattern.forEach((v, i) => {
-                if (originPattern[i] === 1 - negativePattern[i]) {
-                    listPartials.add(v);
-                }
-            });
-        }
-
-        listPartials.forEach((v) => {
-            const typeField = createPrimitiveType([...patternBody.scope.get(v).values()]);
-            result.push(`${v}?: ${typeField}`);
-        });
-
-        return `{${result.join(", ")}}`;
-    };
-
     const groupByKeys = new Map();
+    indexAllObjects.forEach((idxObj) => {
+        const currentObject = records[idxObj];
+        const hashKey = keyPattern.filter((key) => key in currentObject).join("~|~");
 
-    for (const item of values) {
-        const surprint = [];
-        for (const key of keyPattern) {
-            surprint.push(key in item ? 1 : 0);
+        if (!groupByKeys.has(hashKey)) {
+            groupByKeys.set(hashKey, new Map());
         }
-        const surprintHash = JSON.stringify(surprint);
 
-        if (!groupByKeys.has(surprintHash)) {
-            groupByKeys.set(surprintHash, new Map());
-        }
-        //saving scope
-        const scope = groupByKeys.get(surprintHash);
-        for (const key in item) {
-            if (!scope.has(key)) {
-                scope.set(key, new Set());
+        const propertySet = groupByKeys.get(hashKey);
+        for (let property in currentObject) {
+            if (!propertySet.has(property)) {
+                propertySet.set(property, new Set());
             }
-            scope.get(key).add(item[key]);
+            propertySet.get(property).add(currentObject[property]);
         }
-    }
-
-    let checkSum;
-    let intersectGroups = new Map();
-
-    let allGroups = [...groupByKeys].reduce((obj, item) => {
-        obj.push({ key: item[0], patterns: [item[0]], scope: item[1] });
-        return obj;
-    }, []);
-
-    allGroups.forEach(({ key, patterns, scope }) => {
-        intersectGroups.set(key, { patterns, scope });
     });
 
-    // console.dir(allGroups, { depth: null, maxArrayLength: null });
+    const resultType = [];
+    groupByKeys.forEach((group) => {
+        const currentType = [];
+        group.forEach((valueSet, key) => {
+            const typeField = createPrimitiveType([...valueSet.values()]);
+            currentType.push(`${key}: ${typeField}`);
+        });
 
-    // do {
-    //     checkSum = 0;
+        resultType.push(`{${currentType.join(", ")}}`);
+    });
 
-    //     allGroups.forEach((p1, i) => {
-    //         allGroups.forEach((p2, j) => {
-    //             if (j > i) {
-    //                 let sum = 0;
+    resultType.push(createPrimitiveType([...allPrimitives.values()]));
 
-    //                 const p1Key = JSON.parse(p1.key);
-    //                 const p2Key = JSON.parse(p2.key);
-
-    //                 const intSec = p1Key.map((v, idx) => {
-    //                     const res = v && p2Key[idx];
-    //                     sum += res;
-    //                     return res;
-    //                 });
-
-    //                 if (i === 0 && j === 1) {
-    //                 }
-
-    //                 if (sum > 0) {
-    //                     const intSecHash = JSON.stringify(intSec);
-
-    //                     if (!intersectGroups.has(intSecHash)) {
-    //                         intersectGroups.set(intSecHash, { patterns: [], scope: new Map() });
-    //                     }
-    //                     const arr = intersectGroups
-    //                         .get(intSecHash)
-    //                         .patterns.concat(p1.patterns)
-    //                         .concat(p2.patterns);
-    //                     intersectGroups.get(intSecHash).patterns = arr;
-    //                     if (i === 0 && j === 1) {
-    //                     }
-
-    //                     const newScope = intersectGroups.get(intSecHash).scope;
-
-    //                     p1.scope.forEach((values, key) => {
-    //                         if (!newScope.has(key)) {
-    //                             newScope.set(key, new Set());
-    //                         }
-    //                         values.forEach((v) => newScope.get(key).add(v));
-    //                     });
-
-    //                     p2.scope.forEach((values, key) => {
-    //                         if (!newScope.has(key)) {
-    //                             newScope.set(key, new Set());
-    //                         }
-    //                         values.forEach((v) => newScope.get(key).add(v));
-    //                     });
-    //                     if (i === 0 && j === 1) {
-    //                     }
-
-    //                     intersectGroups.get(intSecHash).scope = newScope;
-
-    //                     if (intSecHash !== p1.key) {
-    //                         intersectGroups.delete(p1.key);
-    //                     }
-
-    //                     if (intSecHash !== p2.key) {
-    //                         intersectGroups.delete(p2.key);
-    //                     }
-    //                 }
-    //                 checkSum += sum;
-    //             }
-    //         });
-    //     });
-
-    //     // console.dir(intersectGroups, { depth: null, maxArrayLength: null });
-
-    //     allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
-    //         obj.push({ key: item, ...intersectGroups.get(item) });
-    //         return obj;
-    //     }, []);
-
-    //     // console.dir(allGroups, { depth: null, maxArrayLength: null });
-    // } while (checkSum > 0);
-
-    const output = [];
-
-    for (let [key, body] of intersectGroups) {
-        output.push(createObjectType(key, body));
-    }
-
-    if (allPrimitives.size > 0) {
-        output.push(createPrimitiveType([...allPrimitives.values()]));
-    }
-
-    return output.join("|");
+    return resultType.filter((str) => str.length > 0).join("|");
 }
 
 module.exports = solution;
