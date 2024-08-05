@@ -39,7 +39,7 @@ function createPrimitiveType(list) {
         }
     }
 
-    return result.join(" | ");
+    return result.join("|");
 }
 
 function solution(values) {
@@ -126,82 +126,82 @@ function solution(values) {
 
     // console.dir(allGroups, { depth: null, maxArrayLength: null });
 
-    do {
-        checkSum = 0;
+    // do {
+    //     checkSum = 0;
 
-        allGroups.forEach((p1, i) => {
-            allGroups.forEach((p2, j) => {
-                if (j > i) {
-                    let sum = 0;
+    //     allGroups.forEach((p1, i) => {
+    //         allGroups.forEach((p2, j) => {
+    //             if (j > i) {
+    //                 let sum = 0;
 
-                    const p1Key = JSON.parse(p1.key);
-                    const p2Key = JSON.parse(p2.key);
+    //                 const p1Key = JSON.parse(p1.key);
+    //                 const p2Key = JSON.parse(p2.key);
 
-                    const intSec = p1Key.map((v, idx) => {
-                        const res = v && p2Key[idx];
-                        sum += res;
-                        return res;
-                    });
+    //                 const intSec = p1Key.map((v, idx) => {
+    //                     const res = v && p2Key[idx];
+    //                     sum += res;
+    //                     return res;
+    //                 });
 
-                    if (i === 0 && j === 1) {
-                    }
+    //                 if (i === 0 && j === 1) {
+    //                 }
 
-                    if (sum > 0) {
-                        const intSecHash = JSON.stringify(intSec);
+    //                 if (sum > 0) {
+    //                     const intSecHash = JSON.stringify(intSec);
 
-                        if (!intersectGroups.has(intSecHash)) {
-                            intersectGroups.set(intSecHash, { patterns: [], scope: new Map() });
-                        }
-                        const arr = intersectGroups
-                            .get(intSecHash)
-                            .patterns.concat(p1.patterns)
-                            .concat(p2.patterns);
-                        intersectGroups.get(intSecHash).patterns = arr;
-                        if (i === 0 && j === 1) {
-                        }
+    //                     if (!intersectGroups.has(intSecHash)) {
+    //                         intersectGroups.set(intSecHash, { patterns: [], scope: new Map() });
+    //                     }
+    //                     const arr = intersectGroups
+    //                         .get(intSecHash)
+    //                         .patterns.concat(p1.patterns)
+    //                         .concat(p2.patterns);
+    //                     intersectGroups.get(intSecHash).patterns = arr;
+    //                     if (i === 0 && j === 1) {
+    //                     }
 
-                        const newScope = intersectGroups.get(intSecHash).scope;
+    //                     const newScope = intersectGroups.get(intSecHash).scope;
 
-                        p1.scope.forEach((values, key) => {
-                            if (!newScope.has(key)) {
-                                newScope.set(key, new Set());
-                            }
-                            values.forEach((v) => newScope.get(key).add(v));
-                        });
+    //                     p1.scope.forEach((values, key) => {
+    //                         if (!newScope.has(key)) {
+    //                             newScope.set(key, new Set());
+    //                         }
+    //                         values.forEach((v) => newScope.get(key).add(v));
+    //                     });
 
-                        p2.scope.forEach((values, key) => {
-                            if (!newScope.has(key)) {
-                                newScope.set(key, new Set());
-                            }
-                            values.forEach((v) => newScope.get(key).add(v));
-                        });
-                        if (i === 0 && j === 1) {
-                        }
+    //                     p2.scope.forEach((values, key) => {
+    //                         if (!newScope.has(key)) {
+    //                             newScope.set(key, new Set());
+    //                         }
+    //                         values.forEach((v) => newScope.get(key).add(v));
+    //                     });
+    //                     if (i === 0 && j === 1) {
+    //                     }
 
-                        intersectGroups.get(intSecHash).scope = newScope;
+    //                     intersectGroups.get(intSecHash).scope = newScope;
 
-                        if (intSecHash !== p1.key) {
-                            intersectGroups.delete(p1.key);
-                        }
+    //                     if (intSecHash !== p1.key) {
+    //                         intersectGroups.delete(p1.key);
+    //                     }
 
-                        if (intSecHash !== p2.key) {
-                            intersectGroups.delete(p2.key);
-                        }
-                    }
-                    checkSum += sum;
-                }
-            });
-        });
+    //                     if (intSecHash !== p2.key) {
+    //                         intersectGroups.delete(p2.key);
+    //                     }
+    //                 }
+    //                 checkSum += sum;
+    //             }
+    //         });
+    //     });
 
-        // console.dir(intersectGroups, { depth: null, maxArrayLength: null });
+    //     // console.dir(intersectGroups, { depth: null, maxArrayLength: null });
 
-        allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
-            obj.push({ key: item, ...intersectGroups.get(item) });
-            return obj;
-        }, []);
+    //     allGroups = [...intersectGroups.keys()].reduce((obj, item) => {
+    //         obj.push({ key: item, ...intersectGroups.get(item) });
+    //         return obj;
+    //     }, []);
 
-        // console.dir(allGroups, { depth: null, maxArrayLength: null });
-    } while (checkSum > 0);
+    //     // console.dir(allGroups, { depth: null, maxArrayLength: null });
+    // } while (checkSum > 0);
 
     const output = [];
 
@@ -213,7 +213,7 @@ function solution(values) {
         output.push(createPrimitiveType([...allPrimitives.values()]));
     }
 
-    return output.join(" | ");
+    return output.join("|");
 }
 
 module.exports = solution;
