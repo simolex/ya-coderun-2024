@@ -65,7 +65,7 @@ class MinHeap {
 
 const eventTypes = {
     start: 1,
-    finish: -1,
+    finish: -1
 };
 
 module.exports = function solution(list, { dayWidth, gap, startWeek }) {
@@ -78,7 +78,7 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
                 time: task[key],
                 type: eventTypes[key],
                 finish: task["finish"],
-                idx,
+                idx
             });
         }
     });
@@ -87,6 +87,7 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
 
     const eventsBlocks = [];
     let countEvent = 0;
+    let maximumLevels = 0;
     let maxLevels = 0;
     let currentBlock = -1;
 
@@ -95,16 +96,22 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
             if (countEvent === 0) {
                 currentBlock++;
                 eventsBlocks[currentBlock] = { start: event.time, events: [] };
+                maxLevels = 1;
             }
             countEvent++;
         } else if (event.type === eventTypes.finish) {
             countEvent--;
+            if (countEvent === 0) {
+                eventsBlocks[currentBlock].size = maxLevels;
+            }
         }
+
         maxLevels = countEvent > maxLevels ? countEvent : maxLevels;
+        maxLevels = maxLevels > maximumLevels ? maxLevels : maximumLevels;
         eventsBlocks[currentBlock].events.push(event);
     });
 
-    const levelHeap = new MinHeap(
+    const levelsHeap = new MinHeap(
         Array(maxLevels * 2)
             .fill(null)
             .map((_, i) => i)
@@ -112,22 +119,37 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
 
     const usedLevels = new Map();
     let level = -1;
-    let indexCeil;
+    let indexCell;
+    let cell;
 
     eventsBlocks.map((block) => {
-        block.ceils = [];
+        block.cells = [];
+        const emptyLevels = Array(block.size).fill(true);
+
         block.events.forEach((event) => {
             if (event.type === eventTypes.start) {
-                level = levelHeap.pop();
+                level = levelsHeap.pop();
 
-                block.ceils.push({ top: event.time, level: level });
+                emptyLevels[level] = false;
+                usedLevels.forEach((event) => {
+                    event.emptyLevels[level] = false;
+                });
 
-                usedLevels.set(event.idx, { indexCeil: block.ceils.length - 1, level });
+                usedLevels.set(event.idx, {
+                    top: event.time,
+                    emptyLevels: Array.from(emptyLevels),
+                    level
+                });
+                // event["idxCell"] = block.cells.length - 1;
             } else if (event.type === eventTypes.finish) {
-                ({ indexCeil, level } = usedLevels.get(event.idx));
-                levelHeap.push(level);
+                cell = usedLevels.get(event.idx);
+                level = cell.level;
+                levelsHeap.push(level);
+                emptyLevels[level] = true;
 
-                block.ceils[indexCeil].height = event.time - block.ceils[indexCeil].top;
+                cell.height = event.time - block.cells[indexCell].top;
+                block.cells.push(cell);
+                // event["idxCell"] = indexCell;
             }
         });
         return block;
@@ -135,7 +157,7 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
 
     eventsBlocks.forEach((t) => {
         const m = (t.start - startWeek) / 60;
-        console.log(t.start, Math.floor(m / 1440), m % 1440 /*, t.events*/, t.ceils);
+        console.log(t.start, Math.floor(m / 1440), m % 1440, t.size, t.events, t.cells);
     });
 
     return [];
