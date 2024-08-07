@@ -65,7 +65,7 @@ class MinHeap {
 
 const eventTypes = {
     start: 1,
-    finish: -1
+    finish: -1,
 };
 
 module.exports = function solution(list, { dayWidth, gap, startWeek }) {
@@ -78,7 +78,7 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
                 time: task[key],
                 type: eventTypes[key],
                 finish: task["finish"],
-                idx
+                idx,
             });
         }
     });
@@ -87,8 +87,8 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
 
     const eventsBlocks = [];
     let countEvent = 0;
-    let maximumLevels = 0;
     let maxLevels = 0;
+    let sizeBlock = 0;
     let currentBlock = -1;
 
     eventsList.forEach((event) => {
@@ -96,18 +96,18 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
             if (countEvent === 0) {
                 currentBlock++;
                 eventsBlocks[currentBlock] = { start: event.time, events: [] };
-                maxLevels = 1;
+                sizeBlock = 1;
             }
             countEvent++;
         } else if (event.type === eventTypes.finish) {
             countEvent--;
             if (countEvent === 0) {
-                eventsBlocks[currentBlock].size = maxLevels;
+                eventsBlocks[currentBlock].size = sizeBlock;
             }
         }
 
-        maxLevels = countEvent > maxLevels ? countEvent : maxLevels;
-        maxLevels = maxLevels > maximumLevels ? maxLevels : maximumLevels;
+        sizeBlock = countEvent > sizeBlock ? countEvent : sizeBlock;
+        maxLevels = sizeBlock > maxLevels ? sizeBlock : maxLevels;
         eventsBlocks[currentBlock].events.push(event);
     });
 
@@ -138,7 +138,7 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
                 usedLevels.set(event.idx, {
                     top: event.time,
                     emptyLevels: Array.from(emptyLevels),
-                    level
+                    level,
                 });
                 // event["idxCell"] = block.cells.length - 1;
             } else if (event.type === eventTypes.finish) {
