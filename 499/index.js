@@ -65,12 +65,11 @@ class MinHeap {
 
 const eventTypes = {
     start: 1,
-    finish: -1,
+    finish: -1
 };
 
 function solution(list, { dayWidth, gap, startWeek }) {
-    const countTask = list.length;
-    const eventsList = Array(2 * countTask);
+    const eventsList = [];
 
     list.forEach((task, idx) => {
         for (let key in task) {
@@ -78,12 +77,12 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 time: (task[key] - startWeek) / 60,
                 type: eventTypes[key],
                 finish: (task["finish"] - startWeek) / 60,
-                idx,
+                idx
             });
         }
     });
 
-    eventsList.sort((a, b) => a.time - b.time || a.event - b.event || b.finish - a.finish);
+    eventsList.sort((a, b) => a.time - b.time || a.type - b.type || b.finish - a.finish);
 
     const eventsBlocks = [];
     let countEvent = 0;
@@ -137,7 +136,7 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 usedLevels.set(event.idx, {
                     top: event.time,
                     emptyLevels: Array.from(emptyLevels),
-                    level,
+                    level
                 });
                 event["idxCell"] = block.cells.length - 1;
             } else if (event.type === eventTypes.finish) {
@@ -170,23 +169,23 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 top: cell.top % 1440,
                 left: cell.level * (eventWidth + gap),
                 width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
-                height: cell.height,
+                height: cell.height
             };
             result.push(resultCell);
         });
     });
 
-    eventsBlocks.forEach((t) => {
-        const m = t.start;
-        console.log(
-            t.start,
-            Math.floor(m / 1440),
-            m % 1440,
-            t.size,
-            //  t.events,
-            t.cells
-        );
-    });
+    // eventsBlocks.forEach((t) => {
+    //     const m = t.start;
+    //     console.log(
+    //         t.start,
+    //         Math.floor(m / 1440),
+    //         m % 1440,
+    //         t.size,
+    //         //  t.events,
+    //         t.cells
+    //     );
+    // });
 
     return result;
 }
