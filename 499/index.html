@@ -1,200 +1,377 @@
 <html>
+    <head>
+        <style>
+            .root {
+                display: grid;
+                grid-template-columns: 40px repeat(5, 245px);
+                gap: 15px;
+            }
 
-<head>
-    <style>
-        .root {
-            display: grid;
-            grid-template-columns: 40px repeat(5, 245px);
-            gap: 15px;
-        }
+            .wrapper {
+                background-color: #eee;
+                padding: 5px;
+            }
 
-        .wrapper {
-            background-color: #eee;
-            padding: 5px;
-        }
+            .day {
+                position: relative;
+            }
 
-        .day {
-            position: relative;
-        }
+            .event {
+                background-color: khaki;
+                border: 1px solid yellowgreen;
+                border-radius: 8px;
+                position: absolute;
+                padding: 5px;
+                box-sizing: border-box;
+            }
 
-        .event {
-            background-color: khaki;
-            border: 1px solid yellowgreen;
-            border-radius: 8px;
-            position: absolute;
-            padding: 5px;
-            box-sizing: border-box;
-        }
+            .timeline {
+                text-align: right;
+            }
 
-        .timeline {
-            text-align: right;
-        }
+            .timeline > div {
+                height: 30px;
+            }
 
-        .timeline>div {
-            height: 30px
-        }
+            .timeline > div:nth-child(2n + 1) {
+                color: #ccc;
+            }
+        </style>
+    </head>
 
-        .timeline>div:nth-child(2n+1) {
-            color: #ccc
-        }
-    </style>
-</head>
-
-<body>
-    <div class="root">
-        <div class="timeline">
-            <div></div>
-            <div>9:00</div>
-            <div>9:30</div>
-            <div>10:00</div>
-            <div>10:30</div>
-            <div>11:00</div>
-            <div>11:30</div>
-            <div>12:00</div>
-            <div>12:30</div>
-            <div>13:00</div>
-            <div>13:30</div>
-            <div>14:00</div>
-            <div>14:30</div>
-            <div>15:00</div>
-            <div>15:30</div>
-            <div>16:00</div>
-            <div>16:30</div>
-            <div>17:00</div>
-            <div></div>
-        </div>
-        <div class="wrapper">
-            <div class="day">
+    <body>
+        <div class="root">
+            <div class="timeline">
+                <div></div>
+                <div>9:00</div>
+                <div>9:30</div>
+                <div>10:00</div>
+                <div>10:30</div>
+                <div>11:00</div>
+                <div>11:30</div>
+                <div>12:00</div>
+                <div>12:30</div>
+                <div>13:00</div>
+                <div>13:30</div>
+                <div>14:00</div>
+                <div>14:30</div>
+                <div>15:00</div>
+                <div>15:30</div>
+                <div>16:00</div>
+                <div>16:30</div>
+                <div>17:00</div>
+                <div></div>
+            </div>
+            <div class="wrapper">
+                <div class="day"></div>
+            </div>
+            <div class="wrapper">
+                <div class="day"></div>
+            </div>
+            <div class="wrapper">
+                <div class="day"></div>
+            </div>
+            <div class="wrapper">
+                <div class="day"></div>
+            </div>
+            <div class="wrapper">
+                <div class="day"></div>
             </div>
         </div>
-        <div class="wrapper">
-            <div class="day">
-            </div>
-        </div>
-        <div class="wrapper">
-            <div class="day">
-            </div>
-        </div>
-        <div class="wrapper">
-            <div class="day">
-            </div>
-        </div>
-        <div class="wrapper">
-            <div class="day">
-            </div>
-        </div>
-    </div>
-    <br />
+        <br />
+    </body>
+    <script>
+        const exampleInput = [
+            { start: 1697428800, finish: 1697443200 },
+            { start: 1697443800, finish: 1697458200 },
+            { start: 1697428800, finish: 1697431800 },
+            { start: 1697442000, finish: 1697445000 },
+            { start: 1697429400, finish: 1697443200 },
+            { start: 1697443800, finish: 1697458200 },
+            { start: 1697515200, finish: 1697531400 },
+            { start: 1697517000, finish: 1697521200 },
+            { start: 1697519400, finish: 1697524200 },
+            { start: 1697524800, finish: 1697529000 },
+            { start: 1697532000, finish: 1697544600 },
+            { start: 1697532000, finish: 1697538000 },
+            { start: 1697537400, finish: 1697544600 },
+            { start: 1697603400, finish: 1697608800 },
+            { start: 1697605200, finish: 1697611200 },
+            { start: 1697607000, finish: 1697631000 },
+            { start: 1697608200, finish: 1697621400 },
+            { start: 1697697000, finish: 1697701800 },
+            { start: 1697699400, finish: 1697701800 },
+            { start: 1697702700, finish: 1697703300 },
+            { start: 1697703600, finish: 1697708400 },
+            { start: 1697706900, finish: 1697707800 },
+            { start: 1697702880, finish: 1697704380 },
+            { start: 1697703000, finish: 1697706600 },
+            { start: 1697702400, finish: 1697717400 },
+            { start: 1697702400, finish: 1697709900 },
+            { start: 1697774400, finish: 1697790600 },
+            { start: 1697774400, finish: 1697776200 },
+            { start: 1697778000, finish: 1697781600 },
+            { start: 1697774700, finish: 1697779800 },
+            { start: 1697775600, finish: 1697779800 },
+            { start: 1697782200, finish: 1697784000 },
+        ];
 
-</body>
+        const expectedOutput = [
+            { day: 1, height: 240, width: 75, top: 30, left: 0 },
+            { day: 1, height: 240, width: 75, top: 280, left: 0 },
+            { day: 1, height: 50, width: 75, top: 30, left: 80 },
+            { day: 1, height: 50, width: 75, top: 250, left: 80 },
+            { day: 1, height: 230, width: 75, top: 40, left: 160 },
+            { day: 1, height: 240, width: 75, top: 280, left: 160 },
 
-<script>
-    const exampleInput = [
-        { "start": 1697428800, "finish": 1697443200 },
-        { "start": 1697443800, "finish": 1697458200 },
-        { "start": 1697428800, "finish": 1697431800 },
-        { "start": 1697442000, "finish": 1697445000 },
-        { "start": 1697429400, "finish": 1697443200 },
-        { "start": 1697443800, "finish": 1697458200 },
-        { "start": 1697515200, "finish": 1697531400 },
-        { "start": 1697517000, "finish": 1697521200 },
-        { "start": 1697519400, "finish": 1697524200 },
-        { "start": 1697524800, "finish": 1697529000 },
-        { "start": 1697532000, "finish": 1697544600 },
-        { "start": 1697532000, "finish": 1697538000 },
-        { "start": 1697537400, "finish": 1697544600 },
-        { "start": 1697603400, "finish": 1697608800 },
-        { "start": 1697605200, "finish": 1697611200 },
-        { "start": 1697607000, "finish": 1697631000 },
-        { "start": 1697608200, "finish": 1697621400 },
-        { "start": 1697697000, "finish": 1697701800 },
-        { "start": 1697699400, "finish": 1697701800 },
-        { "start": 1697702700, "finish": 1697703300 },
-        { "start": 1697703600, "finish": 1697708400 },
-        { "start": 1697706900, "finish": 1697707800 },
-        { "start": 1697702880, "finish": 1697704380 },
-        { "start": 1697703000, "finish": 1697706600 },
-        { "start": 1697702400, "finish": 1697717400 },
-        { "start": 1697702400, "finish": 1697709900 },
-        { "start": 1697774400, "finish": 1697790600 },
-        { "start": 1697774400, "finish": 1697776200 },
-        { "start": 1697778000, "finish": 1697781600 },
-        { "start": 1697774700, "finish": 1697779800 },
-        { "start": 1697775600, "finish": 1697779800 },
-        { "start": 1697782200, "finish": 1697784000 }
-    ]
+            { day: 2, height: 270, width: 75, top: 30, left: 0 },
+            { day: 2, height: 70, width: 75, top: 60, left: 80 },
+            { day: 2, height: 80, width: 75, top: 100, left: 160 },
+            { day: 2, height: 70, width: 155, top: 190, left: 80 },
+            { day: 2, height: 210, width: 75, top: 310, left: 0 },
+            { day: 2, height: 100, width: 75, top: 310, left: 80 },
+            { day: 2, height: 120, width: 75, top: 400, left: 160 },
 
-    const expectedOutput = [
-        { day: 1, height: 240, width: 75, top: 30, left: 0 },
-        { day: 1, height: 240, width: 75, top: 280, left: 0 },
-        { day: 1, height: 50, width: 75, top: 30, left: 80 },
-        { day: 1, height: 50, width: 75, top: 250, left: 80 },
-        { day: 1, height: 230, width: 75, top: 40, left: 160 },
-        { day: 1, height: 240, width: 75, top: 280, left: 160 },
+            { day: 3, height: 90, width: 55, top: 60, left: 0 },
+            { day: 3, height: 100, width: 55, top: 90, left: 60 },
+            { day: 3, height: 400, width: 55, top: 120, left: 120 },
+            { day: 3, height: 220, width: 55, top: 140, left: 180 },
 
-        { day: 2, height: 270, width: 75, top: 30, left: 0 },
-        { day: 2, height: 70, width: 75, top: 60, left: 80 },
-        { day: 2, height: 80, width: 75, top: 100, left: 160 },
-        { day: 2, height: 70, width: 155, top: 190, left: 80 },
-        { day: 2, height: 210, width: 75, top: 310, left: 0 },
-        { day: 2, height: 100, width: 75, top: 310, left: 80 },
-        { day: 2, height: 120, width: 75, top: 400, left: 160 },
+            { day: 4, height: 80, width: 115, top: 180, left: 0 },
+            { day: 4, height: 40, width: 115, top: 220, left: 120 },
+            { day: 4, height: 10, width: 43, top: 275, left: 96 },
+            { day: 4, height: 80, width: 43, top: 290, left: 96 },
+            { day: 4, height: 15, width: 91, top: 345, left: 144 },
+            { day: 4, height: 25, width: 43, top: 278, left: 144 },
+            { day: 4, height: 60, width: 43, top: 280, left: 192 },
+            { day: 4, height: 250, width: 43, top: 270, left: 0 },
+            { day: 4, height: 125, width: 43, top: 270, left: 48 },
 
-        { day: 3, height: 90, width: 55, top: 60, left: 0 },
-        { day: 3, height: 100, width: 55, top: 90, left: 60 },
-        { day: 3, height: 400, width: 55, top: 120, left: 120 },
-        { day: 3, height: 220, width: 55, top: 140, left: 180 },
+            { day: 5, height: 270, width: 55, top: 30, left: 0 },
+            { day: 5, height: 30, width: 55, top: 30, left: 60 },
+            { day: 5, height: 60, width: 55, top: 90, left: 60 },
+            { day: 5, height: 85, width: 55, top: 35, left: 120 },
+            { day: 5, height: 70, width: 55, top: 50, left: 180 },
+            { day: 5, height: 30, width: 175, top: 160, left: 60 },
+        ];
 
-        { day: 4, height: 80, width: 115, top: 180, left: 0 },
-        { day: 4, height: 40, width: 115, top: 220, left: 120 },
-        { day: 4, height: 10, width: 43, top: 275, left: 96 },
-        { day: 4, height: 80, width: 43, top: 290, left: 96 },
-        { day: 4, height: 15, width: 91, top: 345, left: 144 },
-        { day: 4, height: 25, width: 43, top: 278, left: 144 },
-        { day: 4, height: 60, width: 43, top: 280, left: 192 },
-        { day: 4, height: 250, width: 43, top: 270, left: 0 },
-        { day: 4, height: 125, width: 43, top: 270, left: 48 },
+        // // INPUT your code here
+        // const solution = (list, config = {
+        //     dayWidth: 235,
+        //     gap: 5,
+        //     startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
+        // }) => {
 
-        { day: 5, height: 270, width: 55, top: 30, left: 0 },
-        { day: 5, height: 30, width: 55, top: 30, left: 60 },
-        { day: 5, height: 60, width: 55, top: 90, left: 60 },
-        { day: 5, height: 85, width: 55, top: 35, left: 120 },
-        { day: 5, height: 70, width: 55, top: 50, left: 180 },
-        { day: 5, height: 30, width: 175, top: 160, left: 60 },
-    ]
+        //     return expectedOutput
+        // }
 
+        class MinHeap {
+            constructor(initValues) {
+                if (initValues) {
+                    this.values = initValues;
+                    const lastElementWithChilds = Math.floor(initValues.length / 2) - 1;
+                    for (let i = lastElementWithChilds; i >= 0; i--) {
+                        this._balancing(i);
+                    }
+                } else this.values = [];
+            }
+            push(element) {
+                this.values.push(element);
+                let index = this.values.length - 1;
 
-    // INPUT your code here
-    const solution = (list, config = {
-        dayWidth: 235,
-        gap: 5,
-        startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
-    }) => {
+                while (index > 0) {
+                    const current = this.values[index];
+                    let parentIndex = Math.floor((index - 1) / 2);
 
-        return expectedOutput
-    }
+                    if (this.values[parentIndex] > current) {
+                        this.values[index] = this.values[parentIndex];
+                        this.values[parentIndex] = current;
+                        index = parentIndex;
+                    } else break;
+                }
+            }
+            _balancing(index) {
+                const length = this.values.length;
+                while (index * 2 + 1 < length) {
+                    const current = this.values[index];
+                    let leftChildIndex = 2 * index + 1;
+                    let rightChildIndex = 2 * index + 2;
+                    let leftChild, rightChild;
+                    let swap = null;
+                    leftChild = this.values[leftChildIndex];
+                    rightChild = this.values[rightChildIndex];
 
+                    if (rightChildIndex === length) {
+                        swap = leftChild;
+                    }
+                    swap =
+                        swap === null && rightChild <= leftChild ? rightChildIndex : leftChildIndex;
+                    if (this.values[swap] < current) {
+                        this.values[index] = this.values[swap];
+                        this.values[swap] = current;
+                        index = swap;
+                    } else break;
+                }
+            }
+            pop() {
+                let index = 0;
+                const min = this.values[index];
+                this.values[index] = this.values[this.values.length - 1];
 
-    // draw blocks
-    window.addEventListener('load', () => {
-        const blocks = solution(exampleInput);
+                this._balancing(index);
+                this.values.pop();
+                return min;
+            }
 
-        const days = document.getElementsByClassName('day');
+            getValues() {
+                return this.values;
+            }
+            getSize() {
+                return this.values.length;
+            }
+        }
 
-        for (let i = 0; i < days.length; i++) {
-            blocks.filter(block => block.day === i + 1).forEach(block => {
-                const div = document.createElement('div');
-                div.classList.add('event');
-                div.style = `
+        const eventTypes = {
+            start: 1,
+            finish: -1,
+        };
+
+        function solution(list, { dayWidth, gap, startWeek }) {
+            const countTask = list.length;
+            const eventsList = Array(2 * countTask);
+
+            list.forEach((task, idx) => {
+                for (let key in task) {
+                    eventsList.push({
+                        time: (task[key] - startWeek) / 60,
+                        type: eventTypes[key],
+                        finish: (task["finish"] - startWeek) / 60,
+                        idx,
+                    });
+                }
+            });
+
+            eventsList.sort((a, b) => a.time - b.time || a.event - b.event || b.finish - a.finish);
+
+            const eventsBlocks = [];
+            let countEvent = 0;
+            let maxLevels = 0;
+            let sizeBlock = 0;
+            let currentBlock = -1;
+
+            eventsList.forEach((event) => {
+                if (event.type === eventTypes.start) {
+                    if (countEvent === 0) {
+                        currentBlock++;
+                        eventsBlocks[currentBlock] = { start: event.time, events: [] };
+                        sizeBlock = 1;
+                    }
+                    countEvent++;
+                } else if (event.type === eventTypes.finish) {
+                    countEvent--;
+                    if (countEvent === 0) {
+                        eventsBlocks[currentBlock].size = sizeBlock;
+                    }
+                }
+
+                sizeBlock = countEvent > sizeBlock ? countEvent : sizeBlock;
+                maxLevels = sizeBlock > maxLevels ? sizeBlock : maxLevels;
+                eventsBlocks[currentBlock].events.push(event);
+            });
+
+            const levelsHeap = new MinHeap(
+                Array(maxLevels * 2)
+                    .fill(null)
+                    .map((_, i) => i)
+            );
+
+            const usedLevels = new Map();
+            let level = -1;
+            let cell;
+
+            eventsBlocks.map((block) => {
+                block.cells = [];
+                const emptyLevels = Array(block.size).fill(true);
+
+                block.events.forEach((event) => {
+                    if (event.type === eventTypes.start) {
+                        level = levelsHeap.pop();
+
+                        emptyLevels[level] = false;
+                        usedLevels.forEach((event) => {
+                            event.emptyLevels[level] = false;
+                        });
+
+                        usedLevels.set(event.idx, {
+                            top: event.time,
+                            emptyLevels: Array.from(emptyLevels),
+                            level,
+                        });
+                        event["idxCell"] = block.cells.length - 1;
+                    } else if (event.type === eventTypes.finish) {
+                        cell = usedLevels.get(event.idx);
+                        level = cell.level;
+                        levelsHeap.push(level);
+                        emptyLevels[level] = true;
+
+                        cell.height = event.time - cell.top;
+
+                        cell.emptyLevels.push(false); // для Array.indexOf()
+                        const nextAboveEvent = cell.emptyLevels.indexOf(false, level + 1);
+                        delete cell.emptyLevels;
+                        cell.countAboveEvent = nextAboveEvent - level - 1;
+
+                        block.cells.push(cell);
+                        usedLevels.delete(event.idx);
+                    }
+                });
+                return block;
+            });
+
+            const result = [];
+            eventsBlocks.forEach((block) => {
+                const day = Math.floor(block.start / 1440) + 1;
+                const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+                block.cells.forEach((cell) => {
+                    const resultCell = {
+                        day,
+                        top: cell.top % 1440,
+                        left: cell.level * (eventWidth + gap),
+                        width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
+                        height: cell.height,
+                    };
+                    result.push(resultCell);
+                });
+            });
+
+            return result;
+        }
+
+        // draw blocks
+        window.addEventListener("load", () => {
+            const blocks = solution(exampleInput, {
+                dayWidth: 235,
+                gap: 5,
+                startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
+            });
+
+            const days = document.getElementsByClassName("day");
+
+            for (let i = 0; i < days.length; i++) {
+                blocks
+                    .filter((block) => block.day === i + 1)
+                    .forEach((block) => {
+                        const div = document.createElement("div");
+                        div.classList.add("event");
+                        div.style = `
                     height: ${block.height};
                     width: ${block.width};
                     top: ${block.top};
                     left: ${block.left};
                 `;
-                days[i].appendChild(div);
-            })
-        }
-    })
-</script>
-
+                        days[i].appendChild(div);
+                    });
+            }
+        });
+    </script>
 </html>

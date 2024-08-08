@@ -68,16 +68,16 @@ const eventTypes = {
     finish: -1,
 };
 
-module.exports = function solution(list, { dayWidth, gap, startWeek }) {
+function solution(list, { dayWidth, gap, startWeek }) {
     const countTask = list.length;
     const eventsList = Array(2 * countTask);
 
     list.forEach((task, idx) => {
         for (let key in task) {
             eventsList.push({
-                time: task[key],
+                time: (task[key] - startWeek) / 60,
                 type: eventTypes[key],
-                finish: task["finish"],
+                finish: (task["finish"] - startWeek) / 60,
                 idx,
             });
         }
@@ -119,7 +119,6 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
 
     const usedLevels = new Map();
     let level = -1;
-    let indexCell;
     let cell;
 
     eventsBlocks.map((block) => {
@@ -140,25 +139,56 @@ module.exports = function solution(list, { dayWidth, gap, startWeek }) {
                     emptyLevels: Array.from(emptyLevels),
                     level,
                 });
-                // event["idxCell"] = block.cells.length - 1;
+                event["idxCell"] = block.cells.length - 1;
             } else if (event.type === eventTypes.finish) {
                 cell = usedLevels.get(event.idx);
                 level = cell.level;
                 levelsHeap.push(level);
                 emptyLevels[level] = true;
 
-                cell.height = event.time - block.cells[indexCell].top;
+                cell.height = event.time - cell.top;
+
+                cell.emptyLevels.push(false); // для Array.indexOf()
+                const nextAboveEvent = cell.emptyLevels.indexOf(false, level + 1);
+                delete cell.emptyLevels;
+                cell.countAboveEvent = nextAboveEvent - level - 1;
+
                 block.cells.push(cell);
-                // event["idxCell"] = indexCell;
+                usedLevels.delete(event.idx);
             }
         });
         return block;
     });
+    const result = [];
 
-    eventsBlocks.forEach((t) => {
-        const m = (t.start - startWeek) / 60;
-        console.log(t.start, Math.floor(m / 1440), m % 1440, t.size, t.events, t.cells);
+    eventsBlocks.forEach((block) => {
+        const day = Math.floor(block.start / 1440) + 1;
+        const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+        block.cells.forEach((cell) => {
+            const resultCell = {
+                day,
+                top: cell.top % 1440,
+                left: cell.level * (eventWidth + gap),
+                width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
+                height: cell.height,
+            };
+            result.push(resultCell);
+        });
     });
 
-    return [];
-};
+    eventsBlocks.forEach((t) => {
+        const m = t.start;
+        console.log(
+            t.start,
+            Math.floor(m / 1440),
+            m % 1440,
+            t.size,
+            //  t.events,
+            t.cells
+        );
+    });
+
+    return result;
+}
+module.exports = solution;
+// export default solution;
