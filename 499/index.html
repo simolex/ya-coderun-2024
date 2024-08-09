@@ -101,12 +101,12 @@
             { start: 1697608200, finish: 1697615220 },
             { start: 1697609220, finish: 1697611200 },
             { start: 1697609220, finish: 1697611200 },
-            { start: 1697609220, finish: 1697611200 },
+            // { start: 1697609220, finish: 1697611200 },
             { start: 1697609220, finish: 1697611200 }, //20
             { start: 1697609700, finish: 1697631180 },
             { start: 1697611260, finish: 1697621220 },
             { start: 1697615220, finish: 1697617200 },
-            { start: 1697617200, finish: 1697619180 }
+            { start: 1697617200, finish: 1697619180 },
 
             // { start: 1697428800, finish: 1697443200 }
             // { start: 1697443800, finish: 1697458200 },
@@ -178,7 +178,7 @@
             { day: 5, height: 60, width: 55, top: 90, left: 60 },
             { day: 5, height: 85, width: 55, top: 35, left: 120 },
             { day: 5, height: 70, width: 55, top: 50, left: 180 },
-            { day: 5, height: 30, width: 175, top: 160, left: 60 }
+            { day: 5, height: 30, width: 175, top: 160, left: 60 },
         ];
 
         // // INPUT your code here
@@ -230,7 +230,8 @@
                     if (rightChildIndex === length) {
                         swap = leftChild;
                     }
-                    swap = swap === null && rightChild <= leftChild ? rightChildIndex : leftChildIndex;
+                    swap =
+                        swap === null && rightChild <= leftChild ? rightChildIndex : leftChildIndex;
                     if (this.values[swap] < current) {
                         this.values[index] = this.values[swap];
                         this.values[swap] = current;
@@ -258,7 +259,7 @@
 
         const eventTypes = {
             start: 1,
-            finish: -1
+            finish: -1,
         };
 
         function solution(list, { dayWidth, gap, startWeek }) {
@@ -270,7 +271,7 @@
                         time: (task[key] - startWeek) / 60,
                         type: eventTypes[key],
                         finish: (task["finish"] - startWeek) / 60,
-                        idx
+                        idx,
                     });
                 }
             });
@@ -312,11 +313,13 @@
             const usedLevels = new Map();
             let level = -1;
             let cell;
-
+            let newEvent, prevEvent;
+            let i;
             eventsBlocks.map((block) => {
                 block.cells = [];
                 const emptyLevels = Array(block.size).fill(true);
-
+                const maxEmptyTime = Array(block.size).fill(block.start);
+                prevEvent = null;
                 block.events.forEach((event) => {
                     if (event.type === eventTypes.start) {
                         level = levelsHeap.pop();
@@ -326,19 +329,30 @@
                             event.emptyLevels[level] = false;
                         });
 
-                        usedLevels.set(event.idx, {
+                        newEvent = {
                             top: event.time,
                             emptyLevels: Array.from(emptyLevels),
-                            level
-                        });
-                        event["idxCell"] = block.cells.length - 1;
+                            level,
+                            topMaxEdge: maxEmptyTime[level],
+                            prev: prevEvent,
+                        };
+                        usedLevels.set(event.idx, newEvent);
+                        prevEvent = newEvent;
+                        // event["idxCell"] = block.cells.length - 1;
                     } else if (event.type === eventTypes.finish) {
                         cell = usedLevels.get(event.idx);
                         level = cell.level;
                         levelsHeap.push(level);
                         emptyLevels[level] = true;
 
-                        cell.height = event.time - cell.top;
+                        cell.bottom = event.time;
+
+                        maxEmptyTime[level] = cell.bottom;
+                        // i = level - 1;
+                        // while (i >= 0 && emptyLevels[i]) {
+                        //     maxEmptyTime[i] = cell.bottom;
+                        //     i--;
+                        // }
 
                         cell.emptyLevels.push(false); // для Array.indexOf()
                         const nextAboveEvent = cell.emptyLevels.indexOf(false, level + 1);
@@ -356,17 +370,63 @@
             eventsBlocks.forEach((block) => {
                 const day = Math.floor(block.start / 1440) + 1;
                 const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
-                block.cells.forEach((cell) => {
+                block.cells.forEach((cell, index, array) => {
+                    cell.resultIndex = result.length;
                     const resultCell = {
                         day,
                         top: cell.top % 1440,
                         left: cell.level * (eventWidth + gap),
                         width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
-                        height: cell.height
+                        height: cell.bottom - cell.top,
                     };
                     result.push(resultCell);
                 });
             });
+
+            let maxTopOutside, minTopInside;
+            let specialWidth;
+            let prevLeft;
+
+            eventsBlocks.forEach((block) => {
+                const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+                block.cells.forEach((cell, index, array) => {
+                    if (cell.countAboveEvent > 0) {
+                        console.log(cell);
+                        maxTopOutside = cell.topMaxEdge;
+                        minTopInside = cell.top;
+
+                        let currCell = cell,
+                            prevCell = cell.prev;
+
+                        while (
+                            prevCell.resultIndex >= 0 &&
+                            prevCell.level >= 0 &&
+                            maxTopOutside <= minTopInside
+                        ) {
+                            maxTopOutside = Math.max(maxTopOutside, prevCell.topMaxEdge);
+                            minTopInside = Math.min(minTopInside, prevCell.top);
+                            // console.log(prevCell);
+                            currCell = prevCell;
+                            prevCell = currCell.prev;
+                        }
+                        console.log(currCell, result.length);
+                        // specialWidth =
+                        //     (eventWidth +
+                        //         (index - i + cell.countAboveEvent - 1) * (eventWidth + gap) -
+                        //         (index - i) * gap) /
+                        //     (index - i);
+                        // prevLeft = result[i + 1].left;
+                        // for (let j = i + 1; j <= index; j++) {
+                        //     result[j].width = specialWidth;
+                        //     result[j].left = prevLeft;
+                        //     prevLeft += specialWidth + gap;
+                        // }
+                    }
+                });
+            });
+
+            console.log(eventsBlocks);
+            console.log(result);
 
             return result;
         }
@@ -376,7 +436,7 @@
             const blocks = solution(exampleInput, {
                 dayWidth: 235,
                 gap: 5,
-                startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60
+                startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
             });
 
             const days = document.getElementsByClassName("day");

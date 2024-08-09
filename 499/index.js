@@ -65,7 +65,7 @@ class MinHeap {
 
 const eventTypes = {
     start: 1,
-    finish: -1
+    finish: -1,
 };
 
 function solution(list, { dayWidth, gap, startWeek }) {
@@ -77,7 +77,7 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 time: (task[key] - startWeek) / 60,
                 type: eventTypes[key],
                 finish: (task["finish"] - startWeek) / 60,
-                idx
+                idx,
             });
         }
     });
@@ -136,9 +136,9 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 usedLevels.set(event.idx, {
                     top: event.time,
                     emptyLevels: Array.from(emptyLevels),
-                    level
+                    level,
                 });
-                event["idxCell"] = block.cells.length - 1;
+                // event["idxCell"] = block.cells.length - 1;
             } else if (event.type === eventTypes.finish) {
                 cell = usedLevels.get(event.idx);
                 level = cell.level;
@@ -169,7 +169,7 @@ function solution(list, { dayWidth, gap, startWeek }) {
                 top: cell.top % 1440,
                 left: cell.level * (eventWidth + gap),
                 width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
-                height: cell.height
+                height: cell.height,
             };
             result.push(resultCell);
         });
