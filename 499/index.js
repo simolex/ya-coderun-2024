@@ -72,13 +72,15 @@ function solution(list, { dayWidth, gap, startWeek }) {
     const eventsList = [];
 
     list.forEach((task, idx) => {
-        for (let key in task) {
-            eventsList.push({
-                time: (task[key] - startWeek) / 60,
-                type: eventTypes[key],
-                finish: (task["finish"] - startWeek) / 60,
-                idx,
-            });
+        if (task) {
+            for (let key in task) {
+                eventsList.push({
+                    time: (task[key] - startWeek) / 60,
+                    type: eventTypes[key],
+                    finish: (task["finish"] - startWeek) / 60,
+                    idx,
+                });
+            }
         }
     });
 

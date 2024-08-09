@@ -82,31 +82,76 @@
     </body>
     <script>
         const exampleInput = [
-            { start: 1697428800, finish: 1697431200 }, //0
-            { start: 1697429400, finish: 1697431800 },
-            { start: 1697430000, finish: 1697434800 },
-            { start: 1697430600, finish: 1697432400 },
-            { start: 1697431140, finish: 1697442840 },
-            { start: 1697434080, finish: 1697439960 }, //5
-            { start: 1697435160, finish: 1697439960 },
-            { start: 1697515200, finish: 1697517600 },
-            { start: 1697515200, finish: 1697517600 },
-            { start: 1697516220, finish: 1697519580 },
-            { start: 1697516220, finish: 1697519580 }, //10
-            { start: 1697516220, finish: 1697519580 },
-            { start: 1697516520, finish: 1697539620 },
-            { start: 1697517720, finish: 1697528700 },
-            { start: 1697519760, finish: 1697530680 },
-            { start: 1697608200, finish: 1697615220 }, //15
-            { start: 1697608200, finish: 1697615220 },
-            { start: 1697609220, finish: 1697611200 },
-            { start: 1697609220, finish: 1697611200 },
+            // { start: 1697428800, finish: 1697431200 }, //0
+            // { start: 1697429400, finish: 1697431800 },
+            // { start: 1697430000, finish: 1697434800 },
+            // { start: 1697430600, finish: 1697432400 },
+            // { start: 1697431140, finish: 1697442840 },
+            // { start: 1697434080, finish: 1697439960 }, //5
+            // { start: 1697435160, finish: 1697439960 },
+            // { start: 1697515200, finish: 1697517600 },
+            // { start: 1697515200, finish: 1697517600 },
+            // { start: 1697516220, finish: 1697519580 },
+            // { start: 1697516220, finish: 1697519580 }, //10
+            // { start: 1697516220, finish: 1697519580 },
+            // { start: 1697516520, finish: 1697539620 },
+            // { start: 1697517720, finish: 1697528700 },
+            // { start: 1697519760, finish: 1697530680 },
+            // { start: 1697608200, finish: 1697615220 }, //15
+            // { start: 1697608200, finish: 1697615220 },
             // { start: 1697609220, finish: 1697611200 },
-            { start: 1697609220, finish: 1697611200 }, //20
-            { start: 1697609700, finish: 1697631180 },
-            { start: 1697611260, finish: 1697621220 },
-            { start: 1697615220, finish: 1697617200 },
-            { start: 1697617200, finish: 1697619180 },
+            // { start: 1697609220, finish: 1697611200 },
+            // // { start: 1697609220, finish: 1697611200 },
+            // { start: 1697609220, finish: 1697611200 }, //20
+            // { start: 1697609700, finish: 1697631180 },
+            // { start: 1697611260, finish: 1697621220 },
+            // { start: 1697615220, finish: 1697617200 },
+            // { start: 1697617200, finish: 1697619180 },
+
+            { start: 1697433800, finish: 1697447800, name: "1" },
+            { start: 1697433800, finish: 1697435800, name: "2" },
+            { start: 1697433800, finish: 1697435800, name: "3" },
+            { start: 1697435800, finish: 1697439800, name: "4" },
+            { start: 1697439800, finish: 1697444800, name: "5" },
+            { start: 1697439800, finish: 1697444800, name: "6" },
+            { start: 1697439800, finish: 1697444800, name: "7" },
+            { start: 1697433800, finish: 1697435800, name: "8" },
+            { start: 1697433800, finish: 1697435800, name: "9" },
+            { start: 1697434800, finish: 1697439800, name: "10" },
+            { start: 1697436000, finish: 1697439800, name: "11" },
+            { start: 1697433800, finish: 1697447800, name: "a" },
+            { start: 1697433800, finish: 1697447800, name: "a" },
+            { start: 1697433800, finish: 1697447800, name: "a" },
+            { start: 1697433800, finish: 1697447800, name: "a" },
+            { start: 1697434800, finish: 1697445800, name: "a" },
+            { start: 1697447800, finish: 1697449800, name: "a" },
+            { start: 1697435800, finish: 1697449800, name: "a" },
+            { start: 1697433800, finish: 1697447800, name: "b" },
+            { start: 1697433800, finish: 1697436800, name: "c" },
+            { start: 1697444800, finish: 1697448800, name: "c" },
+            { start: 1697433800, finish: 1697447800, name: "a" },
+            { start: 1697433800, finish: 1697435800, name: "b" },
+            { start: 1697433800, finish: 1697435800, name: "c" },
+            { start: 1697435800, finish: 1697439800, name: "d" },
+            { start: 1697439800, finish: 1697444800, name: "e" },
+            { start: 1697439800, finish: 1697444800, name: "f" },
+            { start: 1697439800, finish: 1697444800, name: "g" },
+            { start: 1697433800, finish: 1697435800, name: "a" },
+            { start: 1697433800, finish: 1697435800, name: "b" },
+            { start: 1697434800, finish: 1697439800, name: "c" },
+            { start: 1697436000, finish: 1697439800, name: "d" },
+            { start: 1697428800, finish: 1697428900, name: "1" },
+            { start: 1697443800, finish: 1697458200, name: "2" },
+            { start: 1697428800, finish: 1697431800, name: "3" },
+            { start: 1697442000, finish: 1697445000, name: "4" },
+            { start: 1697429800, finish: 1697443200, name: "5" },
+            { start: 1697443800, finish: 1697458200, name: "6" },
+            { start: 1697428800, finish: 1697443200, name: "11" },
+            { start: 1697443800, finish: 1697458200, name: "12" },
+            { start: 1697428800, finish: 1697431800, name: "13" },
+            { start: 1697442000, finish: 1697445000, name: "14" },
+            { start: 1697429600, finish: 1697443200, name: "15" },
+            { start: 1697443800, finish: 1697458200, name: "16" },
 
             // { start: 1697428800, finish: 1697443200 }
             // { start: 1697443800, finish: 1697458200 },
@@ -267,12 +312,14 @@
 
             list.forEach((task, idx) => {
                 for (let key in task) {
-                    eventsList.push({
-                        time: (task[key] - startWeek) / 60,
-                        type: eventTypes[key],
-                        finish: (task["finish"] - startWeek) / 60,
-                        idx,
-                    });
+                    if (["start", "finish"].includes(key))
+                        eventsList.push({
+                            time: (task[key] - startWeek) / 60,
+                            type: eventTypes[key],
+                            finish: (task["finish"] - startWeek) / 60,
+                            idx,
+                            name: task["name"],
+                        });
                 }
             });
 
@@ -335,6 +382,7 @@
                             level,
                             topMaxEdge: maxEmptyTime[level],
                             prev: prevEvent,
+                            name: event.name, ////delll
                         };
                         usedLevels.set(event.idx, newEvent);
                         prevEvent = newEvent;
@@ -378,52 +426,53 @@
                         left: cell.level * (eventWidth + gap),
                         width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
                         height: cell.bottom - cell.top,
+                        name: cell.name,
                     };
                     result.push(resultCell);
                 });
             });
 
-            let maxTopOutside, minTopInside;
-            let specialWidth;
-            let prevLeft;
+            // let maxTopOutside, minTopInside;
+            // let specialWidth;
+            // let prevLeft;
 
-            eventsBlocks.forEach((block) => {
-                const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
-                block.cells.forEach((cell, index, array) => {
-                    if (cell.countAboveEvent > 0) {
-                        console.log(cell);
-                        maxTopOutside = cell.topMaxEdge;
-                        minTopInside = cell.top;
+            // eventsBlocks.forEach((block) => {
+            //     const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+            //     block.cells.forEach((cell, index, array) => {
+            //         if (cell.countAboveEvent > 0) {
+            //             console.log(cell);
+            //             maxTopOutside = cell.topMaxEdge;
+            //             minTopInside = cell.top;
 
-                        let currCell = cell,
-                            prevCell = cell.prev;
+            //             let currCell = cell,
+            //                 prevCell = cell.prev;
 
-                        while (
-                            prevCell.resultIndex >= 0 &&
-                            prevCell.level >= 0 &&
-                            maxTopOutside <= minTopInside
-                        ) {
-                            maxTopOutside = Math.max(maxTopOutside, prevCell.topMaxEdge);
-                            minTopInside = Math.min(minTopInside, prevCell.top);
-                            // console.log(prevCell);
-                            currCell = prevCell;
-                            prevCell = currCell.prev;
-                        }
-                        console.log(currCell, result.length);
-                        // specialWidth =
-                        //     (eventWidth +
-                        //         (index - i + cell.countAboveEvent - 1) * (eventWidth + gap) -
-                        //         (index - i) * gap) /
-                        //     (index - i);
-                        // prevLeft = result[i + 1].left;
-                        // for (let j = i + 1; j <= index; j++) {
-                        //     result[j].width = specialWidth;
-                        //     result[j].left = prevLeft;
-                        //     prevLeft += specialWidth + gap;
-                        // }
-                    }
-                });
-            });
+            //             while (
+            //                 prevCell.resultIndex >= 0 &&
+            //                 prevCell.level >= 0 &&
+            //                 maxTopOutside <= minTopInside
+            //             ) {
+            //                 maxTopOutside = Math.max(maxTopOutside, prevCell.topMaxEdge);
+            //                 minTopInside = Math.min(minTopInside, prevCell.top);
+            //                 // console.log(prevCell);
+            //                 currCell = prevCell;
+            //                 prevCell = currCell.prev;
+            //             }
+            //             console.log(currCell, result.length);
+            //             // specialWidth =
+            //             //     (eventWidth +
+            //             //         (index - i + cell.countAboveEvent - 1) * (eventWidth + gap) -
+            //             //         (index - i) * gap) /
+            //             //     (index - i);
+            //             // prevLeft = result[i + 1].left;
+            //             // for (let j = i + 1; j <= index; j++) {
+            //             //     result[j].width = specialWidth;
+            //             //     result[j].left = prevLeft;
+            //             //     prevLeft += specialWidth + gap;
+            //             // }
+            //         }
+            //     });
+            // });
 
             console.log(eventsBlocks);
             console.log(result);
@@ -446,6 +495,7 @@
                     .filter((block) => block.day === i + 1)
                     .forEach((block) => {
                         const div = document.createElement("div");
+                        div.title = block.name;
                         div.classList.add("event");
                         div.style = `
                     height: ${block.height};
