@@ -151,7 +151,7 @@
             { start: 1697428800, finish: 1697431800, name: "13" },
             { start: 1697442000, finish: 1697445000, name: "14" },
             { start: 1697429600, finish: 1697443200, name: "15" },
-            { start: 1697443800, finish: 1697458200, name: "16" },
+            { start: 1697443800, finish: 1697458200, name: "16" }
 
             // { start: 1697428800, finish: 1697443200 }
             // { start: 1697443800, finish: 1697458200 },
@@ -223,7 +223,7 @@
             { day: 5, height: 60, width: 55, top: 90, left: 60 },
             { day: 5, height: 85, width: 55, top: 35, left: 120 },
             { day: 5, height: 70, width: 55, top: 50, left: 180 },
-            { day: 5, height: 30, width: 175, top: 160, left: 60 },
+            { day: 5, height: 30, width: 175, top: 160, left: 60 }
         ];
 
         // // INPUT your code here
@@ -275,8 +275,7 @@
                     if (rightChildIndex === length) {
                         swap = leftChild;
                     }
-                    swap =
-                        swap === null && rightChild <= leftChild ? rightChildIndex : leftChildIndex;
+                    swap = swap === null && rightChild <= leftChild ? rightChildIndex : leftChildIndex;
                     if (this.values[swap] < current) {
                         this.values[index] = this.values[swap];
                         this.values[swap] = current;
@@ -304,22 +303,29 @@
 
         const eventTypes = {
             start: 1,
-            finish: -1,
+            finish: -1
+        };
+
+        const cellTypes = {
+            DIVIDER: "divider",
+            NATIVE: "native"
         };
 
         function solution(list, { dayWidth, gap, startWeek }) {
             const eventsList = [];
-
             list.forEach((task, idx) => {
                 for (let key in task) {
-                    if (["start", "finish"].includes(key))
+                    if (["start", "finish"].includes(key)) {
                         eventsList.push({
                             time: (task[key] - startWeek) / 60,
                             type: eventTypes[key],
                             finish: (task["finish"] - startWeek) / 60,
-                            idx,
-                            name: task["name"],
+                            idx
                         });
+                    }
+                    // else {
+                    //     throw Error("Некорректные данные о событиях");
+                    // }
                 }
             });
 
@@ -359,122 +365,120 @@
 
             const usedLevels = new Map();
             let level = -1;
-            let cell;
-            let newEvent, prevEvent;
-            let i;
+            let newEvent, newDivider;
             eventsBlocks.map((block) => {
-                block.cells = [];
-                const emptyLevels = Array(block.size).fill(true);
-                const maxEmptyTime = Array(block.size).fill(block.start);
-                prevEvent = null;
+                const linkedListLevels = Array(block.size)
+                    .fill(null)
+                    .map((_, i) => ({ type: cellTypes.DIVIDER, top: block.start, level: i }));
+                const stateLinkedLevels = linkedListLevels.map((node) => node);
+
                 block.events.forEach((event) => {
                     if (event.type === eventTypes.start) {
                         level = levelsHeap.pop();
 
-                        emptyLevels[level] = false;
-                        usedLevels.forEach((event) => {
-                            event.emptyLevels[level] = false;
-                        });
-
                         newEvent = {
+                            type: cellTypes.NATIVE,
                             top: event.time,
-                            emptyLevels: Array.from(emptyLevels),
-                            level,
-                            topMaxEdge: maxEmptyTime[level],
-                            prev: prevEvent,
-                            name: event.name, ////delll
+                            level
                         };
-                        usedLevels.set(event.idx, newEvent);
-                        prevEvent = newEvent;
-                        // event["idxCell"] = block.cells.length - 1;
+
+                        if (stateLinkedLevels[level].type === cellTypes.DIVIDER) {
+                            stateLinkedLevels[level].bottom = event.time;
+                        }
+
+                        stateLinkedLevels[level].nextCell = newEvent;
+                        newEvent.prevCell = stateLinkedLevels[level];
+                        stateLinkedLevels[level] = newEvent;
+
+                        usedLevels.set(event.idx, level);
                     } else if (event.type === eventTypes.finish) {
-                        cell = usedLevels.get(event.idx);
-                        level = cell.level;
+                        level = usedLevels.get(event.idx);
                         levelsHeap.push(level);
-                        emptyLevels[level] = true;
 
-                        cell.bottom = event.time;
+                        stateLinkedLevels[level].bottom = event.time;
 
-                        maxEmptyTime[level] = cell.bottom;
-                        // i = level - 1;
-                        // while (i >= 0 && emptyLevels[i]) {
-                        //     maxEmptyTime[i] = cell.bottom;
-                        //     i--;
-                        // }
-
-                        cell.emptyLevels.push(false); // для Array.indexOf()
-                        const nextAboveEvent = cell.emptyLevels.indexOf(false, level + 1);
-                        delete cell.emptyLevels;
-                        cell.countAboveEvent = nextAboveEvent - level - 1;
-
-                        block.cells.push(cell);
                         usedLevels.delete(event.idx);
+
+                        newDivider = {
+                            type: cellTypes.DIVIDER,
+                            top: event.time,
+                            level
+                        };
+
+                        stateLinkedLevels[level].nextCell = newDivider;
+                        newDivider.prevCell = stateLinkedLevels[level];
+                        stateLinkedLevels[level] = stateLinkedLevels[level].nextCell;
+
+                        if (level - 1 >= 0 && stateLinkedLevels[level - 1].type === cellTypes.DIVIDER) {
+                            newDivider.downLevel = stateLinkedLevels[level - 1];
+                            stateLinkedLevels[level - 1].upLevel = newDivider;
+                        }
+
+                        if (level + 1 < block.size && stateLinkedLevels[level + 1].type === cellTypes.DIVIDER) {
+                            newDivider.upLevel = stateLinkedLevels[level + 1];
+                            stateLinkedLevels[level + 1].downLevel = newDivider;
+                        }
+
+                        // let divider = newDivider;
+                        // while (divider.prevLevel !== undefined) {
+                        //     divider.prevLevel.position = divider.position;
+                        //     divider = divider.prevLevel;
+                        // }
                     }
                 });
+                linkedListLevels.map((list, level) => {
+                    let currentNode = list;
+                    let prevNode;
+                    while (currentNode.nextCell) {
+                        prevNode = currentNode;
+                        currentNode = currentNode.nextCell;
+                        if (
+                            currentNode.type === cellTypes.DIVIDER &&
+                            !Object.keys(currentNode).some((key) => ["upLevel", "downLevel"].includes(key))
+                        ) {
+                            prevNode.nextCell = currentNode.nextCell;
+                            if (currentNode.nextCell) {
+                                currentNode.nextCell.prevCell = prevNode;
+                            }
+
+                            delete currentNode;
+                            currentNode = prevNode;
+                        }
+                    }
+                });
+                block.linkedLevels = linkedListLevels;
                 return block;
             });
+
+            console.log(eventsBlocks);
+
             const result = [];
 
             eventsBlocks.forEach((block) => {
                 const day = Math.floor(block.start / 1440) + 1;
                 const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
-                block.cells.forEach((cell, index, array) => {
-                    cell.resultIndex = result.length;
-                    const resultCell = {
-                        day,
-                        top: cell.top % 1440,
-                        left: cell.level * (eventWidth + gap),
-                        width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
-                        height: cell.bottom - cell.top,
-                        name: cell.name,
-                    };
-                    result.push(resultCell);
+
+                block.linkedLevels.forEach((linkedList, level) => {
+                    while (linkedList.nextCell !== undefined) {
+                        const cell = linkedList.nextCell;
+                        if (cell.type === cellTypes.NATIVE) {
+                            cell.resultIndex = result.length;
+                            const resultCell = {
+                                day,
+                                top: cell.top % 1440,
+                                left: level * (eventWidth + gap),
+                                width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
+                                height: cell.bottom - cell.top,
+                                name: cell.name
+                            };
+                            result.push(resultCell);
+                        }
+
+                        linkedList = linkedList.nextCell;
+                    }
                 });
             });
 
-            // let maxTopOutside, minTopInside;
-            // let specialWidth;
-            // let prevLeft;
-
-            // eventsBlocks.forEach((block) => {
-            //     const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
-            //     block.cells.forEach((cell, index, array) => {
-            //         if (cell.countAboveEvent > 0) {
-            //             console.log(cell);
-            //             maxTopOutside = cell.topMaxEdge;
-            //             minTopInside = cell.top;
-
-            //             let currCell = cell,
-            //                 prevCell = cell.prev;
-
-            //             while (
-            //                 prevCell.resultIndex >= 0 &&
-            //                 prevCell.level >= 0 &&
-            //                 maxTopOutside <= minTopInside
-            //             ) {
-            //                 maxTopOutside = Math.max(maxTopOutside, prevCell.topMaxEdge);
-            //                 minTopInside = Math.min(minTopInside, prevCell.top);
-            //                 // console.log(prevCell);
-            //                 currCell = prevCell;
-            //                 prevCell = currCell.prev;
-            //             }
-            //             console.log(currCell, result.length);
-            //             // specialWidth =
-            //             //     (eventWidth +
-            //             //         (index - i + cell.countAboveEvent - 1) * (eventWidth + gap) -
-            //             //         (index - i) * gap) /
-            //             //     (index - i);
-            //             // prevLeft = result[i + 1].left;
-            //             // for (let j = i + 1; j <= index; j++) {
-            //             //     result[j].width = specialWidth;
-            //             //     result[j].left = prevLeft;
-            //             //     prevLeft += specialWidth + gap;
-            //             // }
-            //         }
-            //     });
-            // });
-
-            console.log(eventsBlocks);
             console.log(result);
 
             return result;
@@ -485,7 +489,7 @@
             const blocks = solution(exampleInput, {
                 dayWidth: 235,
                 gap: 5,
-                startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60,
+                startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60
             });
 
             const days = document.getElementsByClassName("day");
@@ -495,7 +499,7 @@
                     .filter((block) => block.day === i + 1)
                     .forEach((block) => {
                         const div = document.createElement("div");
-                        div.title = block.name;
+                        // div.title = block.name;
                         div.classList.add("event");
                         div.style = `
                     height: ${block.height};
