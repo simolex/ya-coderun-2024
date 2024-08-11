@@ -65,22 +65,36 @@ class MinHeap {
 
 const eventTypes = {
     start: 1,
-    finish: -1,
+    finish: -1
+};
+
+const cellTypes = {
+    DIVIDER: "divider",
+    NATIVE: "native"
+};
+
+const appendLink = (node, linkName, reference) => {
+    if (!(linkName in node)) {
+        node[linkName] = [];
+    }
+    node[linkName].push(reference);
 };
 
 function solution(list, { dayWidth, gap, startWeek }) {
     const eventsList = [];
-
     list.forEach((task, idx) => {
-        if (task) {
-            for (let key in task) {
+        for (let key in task) {
+            if (["start", "finish"].includes(key)) {
                 eventsList.push({
                     time: (task[key] - startWeek) / 60,
                     type: eventTypes[key],
                     finish: (task["finish"] - startWeek) / 60,
-                    idx,
+                    idx
                 });
             }
+            // else {
+            //     throw Error("Некорректные данные о событиях");
+            // }
         }
     });
 
@@ -104,6 +118,7 @@ function solution(list, { dayWidth, gap, startWeek }) {
             countEvent--;
             if (countEvent === 0) {
                 eventsBlocks[currentBlock].size = sizeBlock;
+                eventsBlocks[currentBlock].finish = event.time;
             }
         }
 
@@ -120,76 +135,206 @@ function solution(list, { dayWidth, gap, startWeek }) {
 
     const usedLevels = new Map();
     let level = -1;
-    let cell;
-
+    let newEvent, newDivider;
     eventsBlocks.map((block) => {
-        block.cells = [];
-        const emptyLevels = Array(block.size).fill(true);
+        const linkedListLevels = Array(block.size)
+            .fill(null)
+            .map((_, i) => ({ type: cellTypes.DIVIDER, top: block.start, level: i }));
+        const stateLinkedLevels = linkedListLevels.map((node, idx, nodes) => {
+            if (idx > 0) {
+                appendLink(nodes[idx - 1], "upLevel", node);
+                appendLink(node, "downLevel", nodes[idx - 1]);
+            }
+            return node;
+        });
 
         block.events.forEach((event) => {
             if (event.type === eventTypes.start) {
                 level = levelsHeap.pop();
 
-                emptyLevels[level] = false;
-                usedLevels.forEach((event) => {
-                    event.emptyLevels[level] = false;
-                });
-
-                usedLevels.set(event.idx, {
+                newEvent = {
+                    type: cellTypes.NATIVE,
                     top: event.time,
-                    emptyLevels: Array.from(emptyLevels),
-                    level,
-                });
-                // event["idxCell"] = block.cells.length - 1;
+                    level
+                };
+
+                if (stateLinkedLevels[level].type === cellTypes.DIVIDER) {
+                    stateLinkedLevels[level].bottom = event.time;
+                }
+
+                stateLinkedLevels[level].nextCell = newEvent;
+                newEvent.prevCell = stateLinkedLevels[level];
+                stateLinkedLevels[level] = newEvent;
+
+                usedLevels.set(event.idx, level);
             } else if (event.type === eventTypes.finish) {
-                cell = usedLevels.get(event.idx);
-                level = cell.level;
+                level = usedLevels.get(event.idx);
                 levelsHeap.push(level);
-                emptyLevels[level] = true;
 
-                cell.height = event.time - cell.top;
+                stateLinkedLevels[level].bottom = event.time;
 
-                cell.emptyLevels.push(false); // для Array.indexOf()
-                const nextAboveEvent = cell.emptyLevels.indexOf(false, level + 1);
-                delete cell.emptyLevels;
-                cell.countAboveEvent = nextAboveEvent - level - 1;
-
-                block.cells.push(cell);
                 usedLevels.delete(event.idx);
+
+                newDivider = {
+                    type: cellTypes.DIVIDER,
+                    top: event.time,
+                    level
+                };
+
+                stateLinkedLevels[level].nextCell = newDivider;
+                newDivider.prevCell = stateLinkedLevels[level];
+                stateLinkedLevels[level] = stateLinkedLevels[level].nextCell;
+
+                if (level - 1 >= 0 && stateLinkedLevels[level - 1].type === cellTypes.DIVIDER) {
+                    appendLink(newDivider, "downLevel", stateLinkedLevels[level - 1]);
+                    // newDivider.downLevel = stateLinkedLevels[level - 1];
+                    appendLink(stateLinkedLevels[level - 1], "upLevel", newDivider);
+                    // stateLinkedLevels[level - 1].upLevel = newDivider;
+                }
+
+                if (level + 1 < block.size && stateLinkedLevels[level + 1].type === cellTypes.DIVIDER) {
+                    appendLink(newDivider, "upLevel", stateLinkedLevels[level + 1]);
+                    // newDivider.upLevel = stateLinkedLevels[level + 1];
+                    appendLink(stateLinkedLevels[level + 1], "downLevel", newDivider);
+                    // stateLinkedLevels[level + 1].downLevel = newDivider;
+                }
+
+                // let divider = newDivider;
+                // while (divider.prevLevel !== undefined) {
+                //     divider.prevLevel.position = divider.position;
+                //     divider = divider.prevLevel;
+                // }
             }
         });
+        linkedListLevels.map((list, level) => {
+            let currentNode = list;
+            let prevNode;
+            while (currentNode.nextCell) {
+                prevNode = currentNode;
+                currentNode = currentNode.nextCell;
+                if (
+                    currentNode.type === cellTypes.DIVIDER &&
+                    !Object.keys(currentNode).some((key) => ["upLevel", "downLevel"].includes(key))
+                ) {
+                    prevNode.nextCell = currentNode.nextCell;
+                    if (currentNode.nextCell) {
+                        currentNode.nextCell.prevCell = prevNode;
+                    }
+
+                    delete currentNode;
+                    currentNode = prevNode;
+                }
+            }
+
+            if (currentNode.type === cellTypes.DIVIDER) {
+                currentNode.bottom = block.finish;
+            }
+        });
+        block.linkedLevels = linkedListLevels;
         return block;
     });
+
     const result = [];
+
+    eventsBlocks.forEach((block) => {
+        let linkedList;
+        const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+
+        for (let level = block.size - 1; level >= 0; level--) {
+            linkedList = block.linkedLevels[level];
+            while (linkedList) {
+                const cell = linkedList;
+
+                if (cell.type === cellTypes.DIVIDER) {
+                    if (cell.downLevel && cell.downLevel.length > 1) {
+                        let prevUpCell,
+                            upCell = cell;
+
+                        let downCellLeft = cell.downLevel[0];
+                        let downCellRight = cell.downLevel[1];
+
+                        // const nativeLevel = downCellLeft.level;
+
+                        while (
+                            upCell.upLevel &&
+                            upCell.upLevel.length > 0 &&
+                            downCellLeft.bottom >= upCell.upLevel[0].top &&
+                            downCellRight.top <= upCell.upLevel[0].bottom
+                        ) {
+                            upCell = upCell.upLevel[0];
+                        }
+
+                        while (
+                            downCellLeft.downLevel &&
+                            downCellLeft.downLevel[0] &&
+                            downCellRight.downLevel &&
+                            downCellRight.downLevel[0]
+                        ) {
+                            downCellLeft = downCellLeft.downLevel[0];
+                            downCellRight = downCellRight.downLevel[0];
+                        }
+
+                        const sizeFlexBox = upCell.level - downCellLeft.level + 1;
+                        const countItems = cell.level - downCellLeft.level;
+
+                        const baseLevel = downCellLeft.level;
+
+                        const flexEventWidth =
+                            (eventWidth + (gap + eventWidth) * (sizeFlexBox - 1) - gap * (countItems - 1)) / countItems;
+
+                        for (let flexLevel = 0; flexLevel < countItems; flexLevel++) {
+                            for (
+                                let currentCell = downCellLeft.nextCell;
+                                currentCell && currentCell !== downCellRight;
+                                currentCell = currentCell.nextCell
+                            ) {
+                                if (currentCell.type === cellTypes.NATIVE) {
+                                    currentCell.level = baseLevel;
+                                    currentCell.flexEventWidth = flexEventWidth;
+                                    currentCell.flexLevel = flexLevel;
+                                }
+                            }
+                            downCellLeft = downCellLeft.upLevel[0];
+                            downCellRight = downCellRight.upLevel[0];
+                        }
+                    }
+                }
+                linkedList = linkedList.nextCell;
+            }
+        }
+    });
 
     eventsBlocks.forEach((block) => {
         const day = Math.floor(block.start / 1440) + 1;
         const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
-        block.cells.forEach((cell) => {
-            const resultCell = {
-                day,
-                top: cell.top % 1440,
-                left: cell.level * (eventWidth + gap),
-                width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
-                height: cell.height,
-            };
-            result.push(resultCell);
+
+        block.linkedLevels.forEach((linkedList, level) => {
+            while (linkedList.nextCell !== undefined) {
+                const cell = linkedList.nextCell;
+                if (cell.type === cellTypes.NATIVE) {
+                    cell.resultIndex = result.length;
+                    const resultCell = {
+                        day,
+                        top: cell.top % 1440,
+                        left: cell.level * (eventWidth + gap),
+                        width: eventWidth,
+                        height: cell.bottom - cell.top,
+                        name: cell.name
+                    };
+
+                    if (cell.flexEventWidth) {
+                        resultCell.left = resultCell.left + cell.flexLevel * (cell.flexEventWidth + gap);
+                        resultCell.width = cell.flexEventWidth;
+                    } else {
+                        resultCell.width = eventWidth;
+                    }
+                    result.push(resultCell);
+                }
+
+                linkedList = linkedList.nextCell;
+            }
         });
     });
 
-    // eventsBlocks.forEach((t) => {
-    //     const m = t.start;
-    //     console.log(
-    //         t.start,
-    //         Math.floor(m / 1440),
-    //         m % 1440,
-    //         t.size,
-    //         //  t.events,
-    //         t.cells
-    //     );
-    // });
-
     return result;
 }
-module.exports = solution;
-// export default solution;

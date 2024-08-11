@@ -311,6 +311,13 @@
             NATIVE: "native"
         };
 
+        const appendLink = (node, linkName, reference) => {
+            if (!(linkName in node)) {
+                node[linkName] = [];
+            }
+            node[linkName].push(reference);
+        };
+
         function solution(list, { dayWidth, gap, startWeek }) {
             const eventsList = [];
             list.forEach((task, idx) => {
@@ -349,6 +356,7 @@
                     countEvent--;
                     if (countEvent === 0) {
                         eventsBlocks[currentBlock].size = sizeBlock;
+                        eventsBlocks[currentBlock].finish = event.time;
                     }
                 }
 
@@ -370,7 +378,13 @@
                 const linkedListLevels = Array(block.size)
                     .fill(null)
                     .map((_, i) => ({ type: cellTypes.DIVIDER, top: block.start, level: i }));
-                const stateLinkedLevels = linkedListLevels.map((node) => node);
+                const stateLinkedLevels = linkedListLevels.map((node, idx, nodes) => {
+                    if (idx > 0) {
+                        appendLink(nodes[idx - 1], "upLevel", node);
+                        appendLink(node, "downLevel", nodes[idx - 1]);
+                    }
+                    return node;
+                });
 
                 block.events.forEach((event) => {
                     if (event.type === eventTypes.start) {
@@ -410,13 +424,17 @@
                         stateLinkedLevels[level] = stateLinkedLevels[level].nextCell;
 
                         if (level - 1 >= 0 && stateLinkedLevels[level - 1].type === cellTypes.DIVIDER) {
-                            newDivider.downLevel = stateLinkedLevels[level - 1];
-                            stateLinkedLevels[level - 1].upLevel = newDivider;
+                            appendLink(newDivider, "downLevel", stateLinkedLevels[level - 1]);
+                            // newDivider.downLevel = stateLinkedLevels[level - 1];
+                            appendLink(stateLinkedLevels[level - 1], "upLevel", newDivider);
+                            // stateLinkedLevels[level - 1].upLevel = newDivider;
                         }
 
                         if (level + 1 < block.size && stateLinkedLevels[level + 1].type === cellTypes.DIVIDER) {
-                            newDivider.upLevel = stateLinkedLevels[level + 1];
-                            stateLinkedLevels[level + 1].downLevel = newDivider;
+                            appendLink(newDivider, "upLevel", stateLinkedLevels[level + 1]);
+                            // newDivider.upLevel = stateLinkedLevels[level + 1];
+                            appendLink(stateLinkedLevels[level + 1], "downLevel", newDivider);
+                            // stateLinkedLevels[level + 1].downLevel = newDivider;
                         }
 
                         // let divider = newDivider;
@@ -445,14 +463,92 @@
                             currentNode = prevNode;
                         }
                     }
+
+                    if (currentNode.type === cellTypes.DIVIDER) {
+                        currentNode.bottom = block.finish;
+                    }
                 });
                 block.linkedLevels = linkedListLevels;
                 return block;
             });
 
-            console.log(eventsBlocks);
+            // console.log(eventsBlocks);
 
             const result = [];
+
+            eventsBlocks.forEach((block) => {
+                let linkedList;
+                const eventWidth = (dayWidth - gap * (block.size - 1)) / block.size;
+
+                for (let level = block.size - 1; level >= 0; level--) {
+                    linkedList = block.linkedLevels[level];
+                    while (linkedList) {
+                        const cell = linkedList;
+
+                        if (cell.type === cellTypes.DIVIDER) {
+                            if (cell.downLevel && cell.downLevel.length > 1) {
+                                let prevUpCell,
+                                    upCell = cell;
+
+                                let downCellLeft = cell.downLevel[0];
+                                let downCellRight = cell.downLevel[1];
+
+                                // const nativeLevel = downCellLeft.level;
+
+                                while (
+                                    upCell.upLevel &&
+                                    upCell.upLevel.length > 0 &&
+                                    downCellLeft.bottom >= upCell.upLevel[0].top &&
+                                    downCellRight.top <= upCell.upLevel[0].bottom
+                                ) {
+                                    upCell = upCell.upLevel[0];
+                                }
+                                // console.log("DIVIDER", cell);
+                                // console.log("U-DIVIDER", upCell);
+
+                                while (
+                                    downCellLeft.downLevel &&
+                                    downCellLeft.downLevel[0] &&
+                                    downCellRight.downLevel &&
+                                    downCellRight.downLevel[0]
+                                ) {
+                                    downCellLeft = downCellLeft.downLevel[0];
+                                    downCellRight = downCellRight.downLevel[0];
+                                }
+
+                                // console.log("D-DIVIDER", downCellLeft, downCellRight);
+                                const sizeFlexBox = upCell.level - downCellLeft.level + 1;
+                                const countItems = cell.level - downCellLeft.level;
+                                // console.log("SIZE", sizeFlexBox, countItems);
+
+                                const baseLevel = downCellLeft.level;
+
+                                const flexEventWidth =
+                                    (eventWidth + (gap + eventWidth) * (sizeFlexBox - 1) - gap * (countItems - 1)) /
+                                    countItems;
+
+                                for (let flexLevel = 0; flexLevel < countItems; flexLevel++) {
+                                    for (
+                                        let currentCell = downCellLeft.nextCell;
+                                        currentCell && currentCell !== downCellRight;
+                                        currentCell = currentCell.nextCell
+                                    ) {
+                                        if (currentCell.type === cellTypes.NATIVE) {
+                                            currentCell.level = baseLevel;
+                                            currentCell.flexEventWidth = flexEventWidth;
+                                            currentCell.flexLevel = flexLevel;
+                                        }
+                                    }
+                                    downCellLeft = downCellLeft.upLevel[0];
+                                    downCellRight = downCellRight.upLevel[0];
+                                }
+                            }
+                        }
+                        linkedList = linkedList.nextCell;
+                    }
+                }
+            });
+            // console.log(eventsBlocks);
 
             eventsBlocks.forEach((block) => {
                 const day = Math.floor(block.start / 1440) + 1;
@@ -466,11 +562,18 @@
                             const resultCell = {
                                 day,
                                 top: cell.top % 1440,
-                                left: level * (eventWidth + gap),
-                                width: eventWidth + (eventWidth + gap) * cell.countAboveEvent,
+                                left: cell.level * (eventWidth + gap),
+                                width: eventWidth,
                                 height: cell.bottom - cell.top,
                                 name: cell.name
                             };
+
+                            if (cell.flexEventWidth) {
+                                resultCell.left = resultCell.left + cell.flexLevel * (cell.flexEventWidth + gap);
+                                resultCell.width = cell.flexEventWidth;
+                            } else {
+                                resultCell.width = eventWidth;
+                            }
                             result.push(resultCell);
                         }
 
@@ -479,7 +582,7 @@
                 });
             });
 
-            console.log(result);
+            // console.log(result);
 
             return result;
         }
@@ -487,7 +590,7 @@
         // draw blocks
         window.addEventListener("load", () => {
             const blocks = solution(exampleInput, {
-                dayWidth: 235,
+                dayWidth: 435,
                 gap: 5,
                 startWeek: 1697396400 + 8 * 60 * 60 + 30 * 60
             });
