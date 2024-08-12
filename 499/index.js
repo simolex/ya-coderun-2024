@@ -92,9 +92,6 @@ function solution(list, { dayWidth, gap, startWeek }) {
                     idx
                 });
             }
-            // else {
-            //     throw Error("Некорректные данные о событиях");
-            // }
         }
     });
 
@@ -187,23 +184,13 @@ function solution(list, { dayWidth, gap, startWeek }) {
 
                 if (level - 1 >= 0 && stateLinkedLevels[level - 1].type === cellTypes.DIVIDER) {
                     appendLink(newDivider, "downLevel", stateLinkedLevels[level - 1]);
-                    // newDivider.downLevel = stateLinkedLevels[level - 1];
                     appendLink(stateLinkedLevels[level - 1], "upLevel", newDivider);
-                    // stateLinkedLevels[level - 1].upLevel = newDivider;
                 }
 
                 if (level + 1 < block.size && stateLinkedLevels[level + 1].type === cellTypes.DIVIDER) {
                     appendLink(newDivider, "upLevel", stateLinkedLevels[level + 1]);
-                    // newDivider.upLevel = stateLinkedLevels[level + 1];
                     appendLink(stateLinkedLevels[level + 1], "downLevel", newDivider);
-                    // stateLinkedLevels[level + 1].downLevel = newDivider;
                 }
-
-                // let divider = newDivider;
-                // while (divider.prevLevel !== undefined) {
-                //     divider.prevLevel.position = divider.position;
-                //     divider = divider.prevLevel;
-                // }
             }
         });
         linkedListLevels.map((list, level) => {
@@ -247,13 +234,10 @@ function solution(list, { dayWidth, gap, startWeek }) {
 
                 if (cell.type === cellTypes.DIVIDER) {
                     if (cell.downLevel && cell.downLevel.length > 1) {
-                        let prevUpCell,
-                            upCell = cell;
+                        let upCell = cell;
 
                         let downCellLeft = cell.downLevel[0];
                         let downCellRight = cell.downLevel[1];
-
-                        // const nativeLevel = downCellLeft.level;
 
                         while (
                             upCell.upLevel &&
@@ -276,7 +260,6 @@ function solution(list, { dayWidth, gap, startWeek }) {
 
                         const sizeFlexBox = upCell.level - downCellLeft.level + 1;
                         const countItems = cell.level - downCellLeft.level;
-
                         const baseLevel = downCellLeft.level;
 
                         const flexEventWidth =
