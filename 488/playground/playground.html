@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Хэкиль и Лайд</title>
+        <style>
+            :root {
+                --size: 16px;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            .container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                height: 100vh;
+                width: 100vw;
+            }
+
+            .field {
+                box-sizing: border-box;
+                border: 1px solid black;
+
+                position: relative;
+
+                height: calc(var(--size) * 38);
+                width: calc(var(--size) * 41);
+            }
+
+            .pixel {
+                box-sizing: border-box;
+                border: 1px solid black;
+
+                position: absolute;
+
+                top: calc(var(--size) * var(--row));
+                left: calc(var(--size) * var(--col));
+
+                height: var(--size);
+                width: var(--size);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="field" class="field"></div>
+        </div>
+        <script src="./constants.js"></script>
+        <script src="./sdk.js"></script>
+        <script>
+            const spamArt = async () => {
+                const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+                const width = art[0].length;
+
+                const posStart = 10;
+                const pixels = document.querySelectorAll(".pixel");
+
+                for (let pos = posStart; pos < posStart + 15; pos++) {
+                    const pixel = pixels[pos * width + pos];
+
+                    await delay(500);
+
+                    pixel.style.setProperty("background-color", "#0077ff");
+                }
+
+                const posColStart = 21;
+                const posRowStart = 13;
+                for (
+                    let posRow = posRowStart;
+                    posRow < posRowStart + 5;
+                    posRow++
+                ) {
+                    for (
+                        let posCol = posColStart;
+                        posCol < posColStart + 5;
+                        posCol++
+                    ) {
+                        const pixel = pixels[posRow * width + posCol];
+
+                        pixel.style.setProperty("background-color", "#0077ff");
+                    }
+                }
+            };
+
+            const maxChangePixelColorCalls = 15;
+            const maxChangeAreaColorCalls = 1;
+
+            const sdk = new SDK(art);
+
+            const field = document.getElementById("field");
+            sdk.initArt(field);
+
+            const observeArt = (field, art, colors) => {
+                // your code here...
+            };
+
+            observeArt(field, art, colors);
+
+            spamArt();
+        </script>
+    </body>
+</html>
