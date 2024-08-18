@@ -98,15 +98,13 @@
                 if (!hashStyle.has(colorRGBA)) {
                     const className = `block_${i}_${j}`;
 
-                    createStyle(`.${className} {
-                    background-color: rgba(${colorRGBA});
-                    width: 5px;
-                    height: 5px;
-                }`);
                     hashStyle.set(colorRGBA, className);
                 }
 
                 const div = createElement("div", hashStyle.get(colorRGBA));
+                div.style.backgroundColor = `rgba(${colorRGBA})`;
+                div.style.width = 5;
+                div.style.height = 5;
 
                 return div;
             };
