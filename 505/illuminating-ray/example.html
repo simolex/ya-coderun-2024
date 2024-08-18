@@ -161,7 +161,7 @@
                     id: "eb375bed-bf98-4151-b8ac-711a6c0fe33a",
                     comment: "The two text nodes and content are contained in sibling tags",
                     content: `
-              <div>Lorem   <p>ipsum </p><p>Lorem<span>   &nbsp</span> </p> ipsum</div>
+              <div>Lorem   <p>ipsum </p><p>Lorem<span>   </span> </p> ipsum</div>
               `,
                     searchFor: "Lorem ipsum"
                 }
@@ -192,25 +192,28 @@
 
         function highlight() {
             let fullText = "";
+
             const indexNodes = [];
             const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
             let whatSearch = siteSearch.value.replace(/\s+/g, " ");
-            if (whatSearch !== " ") {
-                whatSearch = whatSearch.trim();
-            }
+            // if (whatSearch !== " ") {
+            //     whatSearch = whatSearch.trim();
+            // }
 
             let currentNode = treeWalker.nextNode();
             CSS.highlights.clear();
 
             while (currentNode) {
-                const currentString = currentNode.textContent.replace(regNsbp, " ");
-                fullText += currentString;
+                const currentString = currentNode.textContent;
+                if (currentString.length > 0) {
+                    fullText += currentString;
 
-                const nodePosition = indexNodes.length;
-                indexNodes.push(currentNode);
+                    const nodePosition = indexNodes.length;
+                    indexNodes.push(currentNode);
 
-                for (let i = indexNodes.length; i < nodePosition + currentNode.length; i++) {
-                    indexNodes.push(nodePosition);
+                    for (let i = indexNodes.length; i < nodePosition + currentNode.length; i++) {
+                        indexNodes.push(nodePosition);
+                    }
                 }
 
                 currentNode = treeWalker.nextNode();
@@ -230,7 +233,7 @@
                     } else {
                         let indexCompare = startIndexSearch;
                         isFind = true;
-                        for (let i = 0; i < whatSearch.length && isFind; i++) {
+                        for (let i = 0; i < whatSearch.length && indexCompare <= fullText.length && isFind; i++) {
                             if (whatSearch.charAt(i) === fullText.charAt(indexCompare)) {
                                 do {
                                     indexCompare++;
