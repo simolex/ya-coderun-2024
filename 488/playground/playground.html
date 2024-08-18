@@ -70,16 +70,8 @@
 
                 const posColStart = 21;
                 const posRowStart = 13;
-                for (
-                    let posRow = posRowStart;
-                    posRow < posRowStart + 5;
-                    posRow++
-                ) {
-                    for (
-                        let posCol = posColStart;
-                        posCol < posColStart + 5;
-                        posCol++
-                    ) {
+                for (let posRow = posRowStart; posRow < posRowStart + 5; posRow++) {
+                    for (let posCol = posColStart; posCol < posColStart + 5; posCol++) {
                         const pixel = pixels[posRow * width + posCol];
 
                         pixel.style.setProperty("background-color", "#0077ff");
@@ -97,6 +89,23 @@
 
             const observeArt = (field, art, colors) => {
                 // your code here...
+                const config = {
+                    subtree: true,
+                    attributeOldValue: true
+                };
+
+                const callback = (mutationList) => {
+                    for (const mutation of mutationList) {
+                        if (mutation.type === "attributes") {
+                            console.log(
+                                `The ${mutation.attributeName} attribute was modified from "${mutation.oldValue}".`
+                            );
+                        }
+                    }
+                };
+
+                const observer = new MutationObserver(callback);
+                observer.observe(field, config);
             };
 
             observeArt(field, art, colors);
