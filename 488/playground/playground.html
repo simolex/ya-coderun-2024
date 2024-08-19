@@ -94,14 +94,44 @@
                     attributeOldValue: true
                 };
 
+                const currentBlotch = [];
+
+                class Blotch {
+                    _list = [];
+                    _rect = {};
+
+                    addPart(el) {
+                        this._list.push(el);
+                        this._resizeRect(el);
+                    }
+
+                    _getProperty(el) {
+                        const style = getComputedStyle(el);
+                        return { col: style.getPropertyValue("--col"), row: style.getPropertyValue("--row") };
+                    }
+
+                    _resizeRect(el) {
+                        const { col, row } = this._getProperty(el);
+                        this._rect.left = this._rect.left ? Math.min(this._rect.left, col) : col;
+                        this._rect.right = this._rect.right ? Math.max(this._rect.right, col) : col;
+                        this._rect.top = this._rect.top ? Math.min(this._rect.top, row) : row;
+                        this._rect.bottom = this._rect.bottom ? Math.max(this._rect.bottom, row) : row;
+                    }
+                }
+                const test = new Blotch();
                 const callback = (mutationList) => {
                     for (const mutation of mutationList) {
                         if (mutation.type === "attributes") {
-                            console.log(
-                                `The ${mutation.attributeName} attribute was modified from "${mutation.oldValue}".`
-                            );
+                            test.addPart(mutation.target);
+                            // console.dir(mutation.target);
+                            // console.log(
+                            //     Date.now(),
+
+                            //     `The ${mutation.attributeName} attribute was modified from "${mutation.oldValue}".`
+                            // );
                         }
                     }
+                    console.log(test);
                 };
 
                 const observer = new MutationObserver(callback);
