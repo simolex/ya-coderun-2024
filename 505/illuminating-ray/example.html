@@ -196,15 +196,12 @@
             const indexNodes = [];
             const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
             let whatSearch = siteSearch.value.replace(/\s+/g, " ");
-            // if (whatSearch !== " ") {
-            //     whatSearch = whatSearch.trim();
-            // }
 
             let currentNode = treeWalker.nextNode();
             CSS.highlights.clear();
 
             while (currentNode) {
-                const currentString = currentNode.textContent;
+                const currentString = currentNode.textContent.replace(/\s/g, " ");
                 if (currentString.length > 0) {
                     fullText += currentString;
 
@@ -234,7 +231,7 @@
                         let indexCompare = startIndexSearch;
                         isFind = true;
                         for (let i = 0; i < whatSearch.length && indexCompare <= fullText.length && isFind; i++) {
-                            if (whatSearch.charAt(i) === fullText.charAt(indexCompare)) {
+                            if (whatSearch.charAt(i).toLowerCase() === fullText.charAt(indexCompare).toLowerCase()) {
                                 do {
                                     indexCompare++;
                                 } while (
