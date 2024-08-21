@@ -96,14 +96,24 @@
 
                 const currentBlotch = [];
 
+                class Repainter {
+                    _ptrBlotch = 0;
+                    _blotchs = [];
+
+                    addBlotch() {
+                        const blotch = new Blotch();
+                        this._blotchs.push(blotch);
+                        return blotch;
+                    }
+
+                    lastBlotch() {
+                        return _blotchs[this._blotchs.length - 1];
+                    }
+                }
+
                 class Blotch {
                     _list = [];
                     _rect = {};
-
-                    addPart(el) {
-                        this._list.push(el);
-                        this._resizeRect(el);
-                    }
 
                     _getProperty(el) {
                         const style = getComputedStyle(el);
@@ -116,6 +126,11 @@
                         this._rect.right = this._rect.right ? Math.max(this._rect.right, col) : col;
                         this._rect.top = this._rect.top ? Math.min(this._rect.top, row) : row;
                         this._rect.bottom = this._rect.bottom ? Math.max(this._rect.bottom, row) : row;
+                    }
+
+                    addPixel(el) {
+                        this._list.push(el);
+                        this._resizeRect(el);
                     }
 
                     isNeighbor(el) {
@@ -133,6 +148,7 @@
                         );
                     }
                 }
+
                 const test = new Blotch();
                 const callback = (mutationList) => {
                     for (const mutation of mutationList) {
