@@ -117,6 +117,21 @@
                         this._rect.top = this._rect.top ? Math.min(this._rect.top, row) : row;
                         this._rect.bottom = this._rect.bottom ? Math.max(this._rect.bottom, row) : row;
                     }
+
+                    isNeighbor(el) {
+                        const { col, row } = this._getProperty(el);
+
+                        return (
+                            (this._rect.left <= col &&
+                                this._rect.right >= col &&
+                                this._rect.top - 1 <= row &&
+                                this._rect.bottom + 1 >= row) ||
+                            (this._rect.left - 1 <= col &&
+                                this._rect.right + 1 >= col &&
+                                this._rect.top <= row &&
+                                this._rect.bottom >= row)
+                        );
+                    }
                 }
                 const test = new Blotch();
                 const callback = (mutationList) => {
