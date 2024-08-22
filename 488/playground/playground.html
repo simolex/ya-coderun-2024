@@ -99,43 +99,124 @@
                 class Repainter {
                     _ptrBlotch = 0;
                     _blotchs = [];
+                    _field;
+                    _art;
+                    _colors;
+
+                    constructor(field, art, colors) {
+                        this._field = field;
+                        this._art = art;
+                        this._colors = colors;
+                        this.rSize = art.length;
+                        this.cSize = art[0].length;
+                        this._badArt = Array(this.rSize)
+                            .fill()
+                            .map(() => Array(this.cSize).fill(false));
+                    }
+
+                    nextRectRepaint() {
+                        return this.lastBlotch().maxPart();
+                    }
+
+                    addPixel(el) {
+                        if (!this.lastBlotch() || !this.lastBlotch().isNeighbor(el)) {
+                            this.addBlotch();
+                        }
+                        const { col, row } = this.lastBlotch().addPixel(el);
+                        this._badArt[row][col] = true;
+                    }
 
                     addBlotch() {
-                        const blotch = new Blotch();
+                        if (this.lastBlotch()) {
+                            console.log(this.nextRectRepaint());
+                        }
+                        const blotch = new Blotch(this._art, this._badArt);
                         this._blotchs.push(blotch);
                         return blotch;
                     }
 
                     lastBlotch() {
-                        return _blotchs[this._blotchs.length - 1];
+                        return this._blotchs.length > 0 ? this._blotchs[this._blotchs.length - 1] : undefined;
                     }
                 }
 
                 class Blotch {
-                    _list = [];
                     _rect = {};
+                    _smearyColors = new Set();
+                    _art;
+                    _badArt;
+
+                    constructor(art, badArt) {
+                        this._art = art;
+                        this._badArt = badArt;
+                    }
 
                     _getProperty(el) {
                         const style = getComputedStyle(el);
-                        return { col: style.getPropertyValue("--col"), row: style.getPropertyValue("--row") };
+                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
-                    _resizeRect(el) {
-                        const { col, row } = this._getProperty(el);
+                    _recalcRect(col, row) {
                         this._rect.left = this._rect.left ? Math.min(this._rect.left, col) : col;
                         this._rect.right = this._rect.right ? Math.max(this._rect.right, col) : col;
                         this._rect.top = this._rect.top ? Math.min(this._rect.top, row) : row;
                         this._rect.bottom = this._rect.bottom ? Math.max(this._rect.bottom, row) : row;
                     }
 
+                    _checkColor(col, row) {
+                        this._smearyColors.add(this._art[row][col]);
+                    }
+
+                    maxPart() {
+                        const R = this._rect.bottom - this._rect.top + 1;
+                        const C = this._rect.right - this._rect.left + 1;
+                        // const allColors = [...this._smearyColors.values()];
+                        const dp = {};
+
+                        const maxArea = {};
+                        const maxRect = {};
+                        for (let color of this._smearyColors.values()) {
+                            dp[color] = Array(R)
+                                .fill()
+                                .map(() => Array(C).fill(0));
+                            maxArea[color] = 0;
+                        }
+
+                        for (let i = 0; i < R; i++) {
+                            for (let j = 0; j < C; j++) {
+                                const currentColor = this._art[this._rect.top + i][this._rect.left + j];
+
+                                // if (this._art[this._rect.top + i][this._rect.left + j] === "1") {
+                                dp[currentColor][i][j] = j === 0 ? 1 : dp[currentColor][i][j - 1] + 1;
+                                let width = dp[currentColor][i][j];
+                                for (
+                                    let k = i;
+                                    k >= 0 && this._art[this._rect.top + k][this._rect.left + j] === currentColor;
+                                    k--
+                                ) {
+                                    width = Math.min(width, dp[currentColor][k][j]);
+                                    const widthRect = width * (i - k + 1);
+                                    if (widthRect > maxArea[currentColor]) {
+                                        maxArea[currentColor] = widthRect;
+                                        maxRect[currentColor] = {};
+                                    }
+                                }
+                                // }
+                            }
+                        }
+                        return maxArea;
+                    }
+
                     addPixel(el) {
-                        this._list.push(el);
-                        this._resizeRect(el);
+                        const { col, row } = this._getProperty(el);
+
+                        this._recalcRect(col, row);
+                        this._checkColor(col, row);
+                        return { col, row };
                     }
 
                     isNeighbor(el) {
                         const { col, row } = this._getProperty(el);
-
                         return (
                             (this._rect.left <= col &&
                                 this._rect.right >= col &&
@@ -149,20 +230,23 @@
                     }
                 }
 
-                const test = new Blotch();
+                const colorRepainter = new Repainter(field, art, colors);
+                let handlerTimeout;
+
                 const callback = (mutationList) => {
                     for (const mutation of mutationList) {
                         if (mutation.type === "attributes") {
-                            test.addPart(mutation.target);
-                            // console.dir(mutation.target);
-                            // console.log(
-                            //     Date.now(),
-
-                            //     `The ${mutation.attributeName} attribute was modified from "${mutation.oldValue}".`
-                            // );
+                            colorRepainter.addPixel(mutation.target);
                         }
                     }
-                    console.log(test);
+
+                    if (handlerTimeout) {
+                        clearTimeout(handlerTimeout);
+                    }
+
+                    handlerTimeout = setTimeout(() => {
+                        console.log(colorRepainter.nextRectRepaint());
+                    }, 2000);
                 };
 
                 const observer = new MutationObserver(callback);
