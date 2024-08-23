@@ -68,8 +68,8 @@
                     pixel.style.setProperty("background-color", "#0077ff");
                 }
 
-                const posColStart = 21;
-                const posRowStart = 13;
+                const posColStart = 27; //21
+                const posRowStart = 19; //13
                 for (let posRow = posRowStart; posRow < posRowStart + 5; posRow++) {
                     for (let posCol = posColStart; posCol < posColStart + 5; posCol++) {
                         const pixel = pixels[posRow * width + posCol];
@@ -79,8 +79,8 @@
                 }
             };
 
-            const maxChangePixelColorCalls = 15;
-            const maxChangeAreaColorCalls = 1;
+            const maxChangePixelColorCalls = 16; //15
+            const maxChangeAreaColorCalls = 4; //1
 
             const sdk = new SDK(art);
 
@@ -111,24 +111,53 @@
                         this.cSize = art[0].length;
                         this._badArt = Array(this.rSize)
                             .fill()
-                            .map(() => Array(this.cSize).fill(false));
+                            .map(() => Array(this.cSize).fill(0));
                     }
 
-                    nextRectRepaint() {
-                        return this.lastBlotch().maxPart();
+                    rectRepaint() {
+                        while (this.lastBlotch().getArea() > 0) {
+                            const rect = this.lastBlotch().maxPart();
+                            for (let i = rect.top; i <= rect.bottom; i++) {
+                                for (let j = rect.left; j <= rect.right; j++) {
+                                    this._badArt[i][j] = 2;
+                                }
+                            }
+                            if (rect.area > 1) {
+                                sdk.changeAreaColor(
+                                    rect.left,
+                                    rect.top,
+                                    rect.right,
+                                    rect.bottom,
+                                    this._colors[rect.color]
+                                );
+                                console.log("area", rect);
+                            } else {
+                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
+                                console.log("point", rect);
+                            }
+                        }
+                    }
+
+                    _getProperty(el) {
+                        const style = getComputedStyle(el);
+                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
                     addPixel(el) {
-                        if (!this.lastBlotch() || !this.lastBlotch().isNeighbor(el)) {
-                            this.addBlotch();
+                        const { col, row } = this._getProperty(el);
+                        if (this._badArt[row][col] === 0) {
+                            if (!this.lastBlotch() || !this.lastBlotch().isNeighbor(col, row)) {
+                                this.addBlotch();
+                            }
+
+                            this.lastBlotch().addPixel(col, row);
+                            this._badArt[row][col] = 1;
                         }
-                        const { col, row } = this.lastBlotch().addPixel(el);
-                        this._badArt[row][col] = true;
                     }
 
                     addBlotch() {
                         if (this.lastBlotch()) {
-                            console.log(this.nextRectRepaint());
+                            this.rectRepaint();
                         }
                         const blotch = new Blotch(this._art, this._badArt);
                         this._blotchs.push(blotch);
@@ -145,15 +174,12 @@
                     _smearyColors = new Set();
                     _art;
                     _badArt;
+                    _area;
 
                     constructor(art, badArt) {
+                        this._area = 0;
                         this._art = art;
                         this._badArt = badArt;
-                    }
-
-                    _getProperty(el) {
-                        const style = getComputedStyle(el);
-                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
                     _recalcRect(col, row) {
@@ -167,10 +193,13 @@
                         this._smearyColors.add(this._art[row][col]);
                     }
 
+                    getArea() {
+                        return this._area;
+                    }
+
                     maxPart() {
                         const R = this._rect.bottom - this._rect.top + 1;
                         const C = this._rect.right - this._rect.left + 1;
-                        // const allColors = [...this._smearyColors.values()];
                         const dp = {};
 
                         const maxArea = {};
@@ -184,39 +213,58 @@
 
                         for (let i = 0; i < R; i++) {
                             for (let j = 0; j < C; j++) {
-                                const currentColor = this._art[this._rect.top + i][this._rect.left + j];
+                                if (this._badArt[this._rect.top + i][this._rect.left + j] === 1) {
+                                    const currentColor = this._art[this._rect.top + i][this._rect.left + j];
 
-                                // if (this._art[this._rect.top + i][this._rect.left + j] === "1") {
-                                dp[currentColor][i][j] = j === 0 ? 1 : dp[currentColor][i][j - 1] + 1;
-                                let width = dp[currentColor][i][j];
-                                for (
-                                    let k = i;
-                                    k >= 0 && this._art[this._rect.top + k][this._rect.left + j] === currentColor;
-                                    k--
-                                ) {
-                                    width = Math.min(width, dp[currentColor][k][j]);
-                                    const widthRect = width * (i - k + 1);
-                                    if (widthRect > maxArea[currentColor]) {
-                                        maxArea[currentColor] = widthRect;
-                                        maxRect[currentColor] = {};
+                                    dp[currentColor][i][j] = j === 0 ? 1 : dp[currentColor][i][j - 1] + 1;
+                                    let width = dp[currentColor][i][j];
+                                    let areaRect;
+                                    let minHeight = i;
+                                    for (
+                                        let k = i;
+                                        k >= 0 && this._art[this._rect.top + k][this._rect.left + j] === currentColor;
+                                        k--
+                                    ) {
+                                        if (width <= dp[currentColor][k][j]) {
+                                            width = dp[currentColor][k][j];
+                                            minHeight = k;
+                                        }
+
+                                        areaRect = width * (i - k + 1);
+
+                                        if (areaRect > maxArea[currentColor]) {
+                                            maxArea[currentColor] = areaRect;
+                                            maxRect[currentColor] = {
+                                                top: this._rect.top + minHeight,
+                                                left: this._rect.left + j - width + 1,
+                                                bottom: this._rect.top + i,
+                                                right: this._rect.left + j,
+                                                area: width * (i - minHeight + 1)
+                                            };
+                                        }
                                     }
                                 }
-                                // }
                             }
                         }
-                        return maxArea;
+                        let resultRect = { area: 0 };
+
+                        for (let color in maxRect) {
+                            if (resultRect.area < maxRect[color].area) {
+                                resultRect = maxRect[color];
+                                resultRect.color = color;
+                            }
+                        }
+                        this._area -= resultRect.area;
+                        return resultRect;
                     }
 
-                    addPixel(el) {
-                        const { col, row } = this._getProperty(el);
-
+                    addPixel(col, row) {
+                        this._area++;
                         this._recalcRect(col, row);
                         this._checkColor(col, row);
-                        return { col, row };
                     }
 
-                    isNeighbor(el) {
-                        const { col, row } = this._getProperty(el);
+                    isNeighbor(col, row) {
                         return (
                             (this._rect.left <= col &&
                                 this._rect.right >= col &&
@@ -237,16 +285,15 @@
                     for (const mutation of mutationList) {
                         if (mutation.type === "attributes") {
                             colorRepainter.addPixel(mutation.target);
+                            if (handlerTimeout) {
+                                clearTimeout(handlerTimeout);
+                            }
+
+                            handlerTimeout = setTimeout(() => {
+                                colorRepainter.rectRepaint();
+                            }, 2000);
                         }
                     }
-
-                    if (handlerTimeout) {
-                        clearTimeout(handlerTimeout);
-                    }
-
-                    handlerTimeout = setTimeout(() => {
-                        console.log(colorRepainter.nextRectRepaint());
-                    }, 2000);
                 };
 
                 const observer = new MutationObserver(callback);
