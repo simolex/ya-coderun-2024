@@ -138,6 +138,8 @@
                             // }
                             count++;
                         }
+
+                        this.lastBlotch().nestingRect();
                         console.log(count);
                     }
 
@@ -196,9 +198,23 @@
                         const color = this._art[row][col];
 
                         if (!this._smearyColors.has(color)) {
-                            this._smearyColors.set(color, []);
+                            this._smearyColors.set(color, { pixels: [] });
                         }
-                        this._smearyColors.get(color).push({ col, row });
+                        this._smearyColors.get(color).pixels.push({ col, row });
+                    }
+
+                    _getCountPixel(top, left, bottom, right, colorCode) {
+                        let iTop = top - this._rect.top + 1;
+                        let jLeft = left - this._rect.left + 1;
+                        let iBottom = bottom - this._rect.bottom + 1;
+                        let jRight = right - this._rect.right + 1;
+
+                        return (
+                            this._smearyColors.get(colorCode).prefix[iBottom][jRight] -
+                            this._smearyColors.get(colorCode).prefix[iTop - 1][jRight] -
+                            this._smearyColors.get(colorCode).prefix[iBottom][jLeft - 1] +
+                            this._smearyColors.get(colorCode).prefix[iTop - 1][jLeft - 1]
+                        );
                     }
 
                     getArea() {
@@ -212,7 +228,7 @@
 
                         const maxArea = {};
                         const maxRect = {};
-                        for (let color of this._smearyColors.values()) {
+                        for (let color of this._smearyColors.keys()) {
                             dp[color] = Array(R)
                                 .fill()
                                 .map(() => Array(C).fill(0));
@@ -292,12 +308,40 @@
 
                     nestingRect(maxCountRect) {
                         this.maxCountRect = maxCountRect;
-                        for (let i = this._rect.top; i <= this._rect.bottom; i++) {
-                            for (let j = this._rect.left; j <= this._rect.right; j++) {
-                                const color = this._art[i][j];
-                                this._getNextRect(i, j, 1, 1, color);
+
+                        const colorCodes = [...this._smearyColors.keys()];
+
+                        for (let colorCode of colorCodes) {
+                            this._smearyColors.get(colorCode)["prefix"] = [];
+                            // this._smearyColors.get(colorCode).prefix.push([]);
+                        }
+
+                        for (let i = this._rect.top - 1; i <= this._rect.bottom; i++) {
+                            let iPrefix = i - this._rect.top + 1;
+
+                            for (let colorCode of colorCodes) {
+                                this._smearyColors.get(colorCode).prefix[iPrefix] = [];
+                            }
+
+                            for (let j = this._rect.left - 1; j <= this._rect.right; j++) {
+                                let jPrefix = j - this._rect.left + 1;
+
+                                for (let colorCode of this._smearyColors.keys()) {
+                                    if (iPrefix !== 0 && jPrefix !== 0) {
+                                        this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix] =
+                                            this._smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix] +
+                                            this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix - 1] -
+                                            this._smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix - 1] +
+                                            (this._art[i][j] === colorCode ? 1 : 0);
+                                    } else {
+                                        this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix] = 0;
+                                    }
+                                }
                             }
                         }
+                        console.log(this._smearyColors);
+
+                        // this._getNextRect(i, j, 1, 1, color);
                     }
 
                     addPixel(col, row) {
