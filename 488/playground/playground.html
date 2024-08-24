@@ -115,27 +115,30 @@
                     }
 
                     rectRepaint() {
+                        let count = 0;
                         while (this.lastBlotch().getArea() > 0) {
-                            const rect = this.lastBlotch().maxPart();
+                            const rect = this.lastBlotch().maxPartTest();
                             for (let i = rect.top; i <= rect.bottom; i++) {
                                 for (let j = rect.left; j <= rect.right; j++) {
                                     this._badArt[i][j] = 2;
                                 }
                             }
-                            if (rect.area > 1) {
-                                sdk.changeAreaColor(
-                                    rect.left,
-                                    rect.top,
-                                    rect.right,
-                                    rect.bottom,
-                                    this._colors[rect.color]
-                                );
-                                console.log("area", rect);
-                            } else {
-                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
-                                console.log("point", rect);
-                            }
+                            // if (rect.area > 1) {
+                            //     sdk.changeAreaColor(
+                            //         rect.left,
+                            //         rect.top,
+                            //         rect.right,
+                            //         rect.bottom,
+                            //         this._colors[rect.color]
+                            //     );
+                            //     // console.log("area", rect);
+                            // } else {
+                            //     sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
+                            //     // console.log("point", rect);
+                            // }
+                            count++;
                         }
+                        console.log(count);
                     }
 
                     _getProperty(el) {
@@ -171,7 +174,7 @@
 
                 class Blotch {
                     _rect = {};
-                    _smearyColors = new Set();
+                    _smearyColors = new Map();
                     _art;
                     _badArt;
                     _area;
@@ -190,14 +193,19 @@
                     }
 
                     _checkColor(col, row) {
-                        this._smearyColors.add(this._art[row][col]);
+                        const color = this._art[row][col];
+
+                        if (!this._smearyColors.has(color)) {
+                            this._smearyColors.set(color, []);
+                        }
+                        this._smearyColors.get(color).push({ col, row });
                     }
 
                     getArea() {
                         return this._area;
                     }
 
-                    maxPart() {
+                    maxPartTest() {
                         const R = this._rect.bottom - this._rect.top + 1;
                         const C = this._rect.right - this._rect.left + 1;
                         const dp = {};
@@ -256,6 +264,40 @@
                         }
                         this._area -= resultRect.area;
                         return resultRect;
+                    }
+
+                    _getNextRect(fromTop, fromLeft, height, width, color) {
+                        let resizeable = true;
+
+                        for (let i = fromTop; i < fromTop + height && resizeable; i++) {
+                            if (art[i][fromLeft + width] !== color) {
+                                resizeable = false;
+                            }
+                        }
+                        if (resizeable) {
+                            _getNextRect(fromTop, fromLeft, height, width + 1);
+                        }
+
+                        resizeable = true;
+
+                        for (let j = fromLeft; j < fromLeft + width && resizeable; j++) {
+                            if (art[fromTop + height][j] !== color) {
+                                resizeable = false;
+                            }
+                        }
+                        if (resizeable) {
+                            _getNextRect(fromTop, fromLeft, height + 1, width);
+                        }
+                    }
+
+                    nestingRect(maxCountRect) {
+                        this.maxCountRect = maxCountRect;
+                        for (let i = this._rect.top; i <= this._rect.bottom; i++) {
+                            for (let j = this._rect.left; j <= this._rect.right; j++) {
+                                const color = this._art[i][j];
+                                this._getNextRect(i, j, 1, 1, color);
+                            }
+                        }
                     }
 
                     addPixel(col, row) {
