@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "lib": ["ES2016", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "Classic",
+    "moduleResolution": "node",
     "noImplicitAny": true,
     "outDir": "dist",
     "paths": {
@@ -18,8 +18,8 @@
     "strict": true,
     "strictNullChecks": true,
     "target": "ES2016",
-    "typeRoots": ["node_modules/@types"],
-    "verbatimModuleSyntax": true
+    "typeRoots": ["node_modules/@types", "src/@types", "configuration/@types"],
+    "verbatimModuleSyntax": false
   },
   "exclude": ["node_modules", "config", "public", "webpack"]
 }
