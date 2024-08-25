@@ -30,13 +30,13 @@ module.exports = {
   resolve: {
     extensions: ["", ".js", ".jsx"],
     alias: {
-      "react-virtualized/List": "react-virtualized/dist/es/List",
       components: `${defaultSettings.srcPath}/components/`,
       styles: `${defaultSettings.srcPath}/styles/`,
       config:
         `${defaultSettings.srcPath}/config/` + process.env.REACT_WEBPACK_ENV,
       "react/lib/ReactMount": "react-dom/lib/ReactMount",
     },
+    fallback: { реакт: require.resolve("react") },
   },
   module: {},
 };
