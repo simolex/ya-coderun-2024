@@ -21,6 +21,7 @@ module.exports = {
             jsx: true
         }
     },
+    ignorePatterns: ["**/*.hehehe"],
     rules: {
         indent: ["error", 2, { SwitchCase: 1 }],
         quotes: ["error", "single", "avoid-escape"]

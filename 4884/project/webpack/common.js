@@ -28,19 +28,14 @@ const output = {
 /**
  * Shared plugins.
  */
-const plugins = [
-    htmlWebpackPlugin,
-    copyWebpackPlugin,
-    eSLintWebpackPlugin,
-    dotenvWebpackPlugin,
-    styleLintWebpackPlugin
-];
+const plugins = [htmlWebpackPlugin, eSLintWebpackPlugin, dotenvWebpackPlugin, styleLintWebpackPlugin];
+config.IS_DEV && plugins.push(copyWebpackPlugin);
 
 /**
  * Shared modules.
  */
 const modules = {
-    rules: [css, fonts, images, javaScript, typeScript, hehehe]
+    rules: [css, fonts, images, javaScript, hehehe, typeScript]
 };
 
 /**

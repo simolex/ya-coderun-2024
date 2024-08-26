@@ -30,13 +30,14 @@ module.exports = {
   resolve: {
     extensions: ["", ".js", ".jsx"],
     alias: {
+      реакт: path.resolve("node_modules", "react"),
+      ["�����"]: path.resolve("node_modules", "react"),
       components: `${defaultSettings.srcPath}/components/`,
       styles: `${defaultSettings.srcPath}/styles/`,
       config:
         `${defaultSettings.srcPath}/config/` + process.env.REACT_WEBPACK_ENV,
       "react/lib/ReactMount": "react-dom/lib/ReactMount",
     },
-    fallback: { реакт: require.resolve("react") },
   },
   module: {},
 };
