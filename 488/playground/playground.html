@@ -282,34 +282,77 @@
                         return resultRect;
                     }
 
-                    _getNextRect(fromTop, fromLeft, height, width, color) {
-                        let resizeable = true;
-
-                        for (let i = fromTop; i < fromTop + height && resizeable; i++) {
-                            if (art[i][fromLeft + width] !== color) {
-                                resizeable = false;
+                    _getNextRect(fromTop, fromLeft, result) {
+                        if (fromLeft > this._rect.right) {
+                            fromLeft = this._rect.left;
+                            while (fromTop <= this._rect.bottom && result.visited[fromTop - this._rect.top][0]) {
+                                fromTop++;
                             }
                         }
-                        if (resizeable) {
-                            _getNextRect(fromTop, fromLeft, height, width + 1);
+
+                        if (fromTop > this._rect.bottom) {
+                            return;
                         }
 
-                        resizeable = true;
+                        result.count++;
 
-                        for (let j = fromLeft; j < fromLeft + width && resizeable; j++) {
-                            if (art[fromTop + height][j] !== color) {
-                                resizeable = false;
+                        let iPrefix = fromTop - this._rect.top + 1;
+                        let jPrefix = fromLeft - this._rect.left + 1;
+
+                        currentColor = this._art[fromTop][fromLeft];
+
+                        for (let i = fromTop; i <= this._rect.bottom; i++) {
+                            let height = i - this._rect.top + 1;
+
+                            for (let j = fromLeft; j <= this._rect.right; j++) {
+                                let width = j - this._rect.left + 1;
+                                if (
+                                    this._getCountPixel(iPrefix, jPrefix, height, width, currentColor) ===
+                                    height * width
+                                ) {
+                                    for (let iV = iPrefix - 1; iV < height; iV++) {
+                                        for (let jV = jPrefix - 1; jV < width; jV++) {
+                                            result.visited[iV][jV] = true;
+                                        }
+                                    }
+                                    this._getNextRect(fromTop, fromLeft + width, result);
+                                    for (let iV = iPrefix - 1; iV < height; iV++) {
+                                        for (let jV = jPrefix - 1; jV < width; jV++) {
+                                            result.visited[iV][jV] = undefined;
+                                        }
+                                    }
+                                }
                             }
                         }
-                        if (resizeable) {
-                            _getNextRect(fromTop, fromLeft, height + 1, width);
-                        }
+
+                        // let resizeable = true;
+
+                        // for (let i = fromTop; i < fromTop + height && resizeable; i++) {
+                        //     if (art[i][fromLeft + width] !== color) {
+                        //         resizeable = false;
+                        //     }
+                        // }
+                        // if (resizeable) {
+                        //     _getNextRect(fromTop, fromLeft, height, width + 1);
+                        // }
+
+                        // resizeable = true;
+
+                        // for (let j = fromLeft; j < fromLeft + width && resizeable; j++) {
+                        //     if (art[fromTop + height][j] !== color) {
+                        //         resizeable = false;
+                        //     }
+                        // }
+                        // if (resizeable) {
+                        //     _getNextRect(fromTop, fromLeft, height + 1, width);
+                        // }
                     }
 
                     nestingRect(maxCountRect) {
                         this.maxCountRect = maxCountRect;
 
                         const colorCodes = [...this._smearyColors.keys()];
+                        const visited = [];
 
                         for (let colorCode of colorCodes) {
                             this._smearyColors.get(colorCode)["prefix"] = [];
@@ -322,6 +365,8 @@
                             for (let colorCode of colorCodes) {
                                 this._smearyColors.get(colorCode).prefix[iPrefix] = [];
                             }
+
+                            visited.push([]);
 
                             for (let j = this._rect.left - 1; j <= this._rect.right; j++) {
                                 let jPrefix = j - this._rect.left + 1;
@@ -341,7 +386,7 @@
                         }
                         console.log(this._smearyColors);
 
-                        // this._getNextRect(i, j, 1, 1, color);
+                        this._getNextRect(this._rect.top, this._rect.left, { count: 0, visited });
                     }
 
                     addPixel(col, row) {
