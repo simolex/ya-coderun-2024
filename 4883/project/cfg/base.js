@@ -32,6 +32,7 @@ module.exports = {
     alias: {
       реакт: path.resolve("node_modules", "react"),
       ["�����"]: path.resolve("node_modules", "react"),
+      "react-virtualized/dist/es": "react-virtualized/dist/commonjs",
       components: `${defaultSettings.srcPath}/components/`,
       styles: `${defaultSettings.srcPath}/styles/`,
       config:
