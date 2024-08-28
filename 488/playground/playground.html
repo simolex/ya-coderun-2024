@@ -97,60 +97,29 @@
                 const currentBlotch = [];
 
                 class Repainter {
-                    _ptrBlotch = 0;
+                    #isEndAttack = false;
+                    #pixels = [];
+
+                    #handlerTimeout = [];
+                    #ptrHandler = 0;
+
                     _blotchs = [];
+
                     _field;
                     _art;
                     _colors;
-                    _pixels = [];
-
-                    #handlerTimeout = [];
-                    #logs = [];
-                    #ptrHandler = 0;
 
                     constructor(field, art, colors) {
                         this._field = field;
                         this._art = art;
                         this._colors = colors;
-
-                        const rSize = art.length;
-                        const cSize = art[0].length;
-                        this._badArt = Array(rSize)
-                            .fill()
-                            .map(() => Array(cSize).fill(0));
-                    }
-
-                    rectRepaint(blotch) {
-                        let optimalResult = blotch.nestingRect(Infinity, 0);
-                        for (let rect of optimalResult) {
-                            for (let i = rect.top; i <= rect.bottom; i++) {
-                                for (let j = rect.left; j <= rect.right; j++) {
-                                    this._badArt[i][j] = 2;
-                                }
-                            }
-                            if (rect.area > 1) {
-                                sdk.changeAreaColor(
-                                    rect.left,
-                                    rect.top,
-                                    rect.right,
-                                    rect.bottom,
-                                    this._colors[rect.color]
-                                );
-                            } else {
-                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
-                            }
-                        }
-                    }
-
-                    _getProperty(el) {
-                        const style = getComputedStyle(el);
-                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
                     savePixel(el) {
                         const { col, row } = this._getProperty(el);
-                        if (this._badArt[row][col] === 0) {
-                            this._pixels.push({ col, row });
+
+                        if (!this.#isEndAttack) {
+                            this.#pixels.push({ col, row });
 
                             while (this.#ptrHandler < this.#handlerTimeout.length) {
                                 clearTimeout(this.#handlerTimeout[this.#ptrHandler]);
@@ -170,11 +139,22 @@
                         }
                     }
 
-                    _endAttack() {
-                        this._pixels.sort((a, b) => a.row - b.row || a.col - b.col);
+                    _rectRepaint(blotch) {
+                        let optimalResult = blotch.nestingRect(Infinity, 0);
 
-                        this._pixels.forEach((p) => this._addPixel(p));
-                        this._blotchs.forEach((b) => this.rectRepaint(b));
+                        for (let rect of optimalResult) {
+                            if (rect.area > 1) {
+                                sdk.changeAreaColor(
+                                    rect.left,
+                                    rect.top,
+                                    rect.right,
+                                    rect.bottom,
+                                    this._colors[rect.color]
+                                );
+                            } else {
+                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
+                            }
+                        }
                     }
 
                     _addPixel({ col, row }) {
@@ -191,8 +171,19 @@
                             this._addBlotch();
                             this._lastBlotch().addPixel(col, row);
                         }
+                    }
 
-                        this._badArt[row][col] = 1;
+                    _endAttack() {
+                        this.#isEndAttack = true;
+                        this.#pixels.sort((a, b) => a.row - b.row || a.col - b.col);
+
+                        this.#pixels.forEach((p) => this._addPixel(p));
+                        this._blotchs.forEach((b) => this._rectRepaint(b));
+                    }
+
+                    _getProperty(el) {
+                        const style = getComputedStyle(el);
+                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
                     _addBlotch() {
@@ -332,9 +323,7 @@
                     }
 
                     nestingRect(count, weight) {
-                        //(optimalResult, weight) {
-                        // this._optimal = optimalResult;
-                        this.maxCountRect = count; //optimalResult.length;
+                        this.maxCountRect = count;
                         this._weight = weight;
 
                         const colorCodes = [...this._smearyColors.keys()];
