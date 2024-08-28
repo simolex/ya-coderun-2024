@@ -121,22 +121,7 @@
                     }
 
                     rectRepaint(blotch) {
-                        const draftResult = [];
-                        let weight = 1;
-
-                        while (blotch.getArea() > 0) {
-                            const rect = blotch.maxPartTest();
-                            for (let i = rect.top; i <= rect.bottom; i++) {
-                                for (let j = rect.left; j <= rect.right; j++) {
-                                    this._badArt[i][j] = 2;
-                                }
-                            }
-                            draftResult.push(rect);
-                            weight *= rect.area;
-                        }
-
-                        let optimalResult = blotch.nestingRect(draftResult, weight);
-                        console.log(optimalResult);
+                        let optimalResult = blotch.nestingRect(Infinity, 0);
                         for (let rect of optimalResult) {
                             for (let i = rect.top; i <= rect.bottom; i++) {
                                 for (let j = rect.left; j <= rect.right; j++) {
@@ -164,7 +149,6 @@
 
                     savePixel(el) {
                         const { col, row } = this._getProperty(el);
-
                         if (this._badArt[row][col] === 0) {
                             this._pixels.push({ col, row });
 
@@ -266,67 +250,6 @@
                         return this._area;
                     }
 
-                    maxPartTest() {
-                        const R = this._rect.bottom - this._rect.top + 1;
-                        const C = this._rect.right - this._rect.left + 1;
-                        const dp = {};
-
-                        const maxArea = {};
-                        const maxRect = {};
-                        for (let color of this._smearyColors.keys()) {
-                            dp[color] = Array(R)
-                                .fill()
-                                .map(() => Array(C).fill(0));
-                            maxArea[color] = 0;
-                        }
-
-                        for (let i = 0; i < R; i++) {
-                            for (let j = 0; j < C; j++) {
-                                if (this._badArt[this._rect.top + i][this._rect.left + j] === 1) {
-                                    const currentColor = this._art[this._rect.top + i][this._rect.left + j];
-
-                                    dp[currentColor][i][j] = j === 0 ? 1 : dp[currentColor][i][j - 1] + 1;
-                                    let width = dp[currentColor][i][j];
-                                    let areaRect;
-                                    let minHeight = i;
-                                    for (
-                                        let k = i;
-                                        k >= 0 && this._art[this._rect.top + k][this._rect.left + j] === currentColor;
-                                        k--
-                                    ) {
-                                        if (width <= dp[currentColor][k][j]) {
-                                            width = dp[currentColor][k][j];
-                                            minHeight = k;
-                                        }
-
-                                        areaRect = width * (i - k + 1);
-
-                                        if (areaRect > maxArea[currentColor]) {
-                                            maxArea[currentColor] = areaRect;
-                                            maxRect[currentColor] = {
-                                                top: this._rect.top + minHeight,
-                                                left: this._rect.left + j - width + 1,
-                                                bottom: this._rect.top + i,
-                                                right: this._rect.left + j,
-                                                area: width * (i - minHeight + 1)
-                                            };
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        let resultRect = { area: 0 };
-
-                        for (let color in maxRect) {
-                            if (resultRect.area < maxRect[color].area) {
-                                resultRect = maxRect[color];
-                                resultRect.color = color;
-                            }
-                        }
-                        this._area -= resultRect.area;
-                        return resultRect;
-                    }
-
                     _getNextRect(fromTop, fromLeft, result) {
                         let existNoVisited = false;
 
@@ -408,9 +331,10 @@
                         }
                     }
 
-                    nestingRect(optimalResult, weight) {
-                        this._optimal = optimalResult;
-                        this.maxCountRect = optimalResult.length; //test
+                    nestingRect(count, weight) {
+                        //(optimalResult, weight) {
+                        // this._optimal = optimalResult;
+                        this.maxCountRect = count; //optimalResult.length;
                         this._weight = weight;
 
                         const colorCodes = [...this._smearyColors.keys()];
