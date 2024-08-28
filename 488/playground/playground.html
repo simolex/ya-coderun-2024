@@ -69,9 +69,9 @@
                 }
 
                 const posColStart = 27; //21
-                const posRowStart = 19; //13
-                for (let posRow = posRowStart; posRow < posRowStart + 5; posRow++) {
-                    for (let posCol = posColStart; posCol < posColStart + 5; posCol++) {
+                const posRowStart = 18; //13
+                for (let posRow = posRowStart; posRow < posRowStart + 3; posRow++) {
+                    for (let posCol = posColStart; posCol < posColStart + 3; posCol++) {
                         const pixel = pixels[posRow * width + posCol];
 
                         pixel.style.setProperty("background-color", "#0077ff");
@@ -79,8 +79,8 @@
                 }
             };
 
-            const maxChangePixelColorCalls = 16; //15
-            const maxChangeAreaColorCalls = 4; //1
+            const maxChangePixelColorCalls = 20; //15
+            const maxChangeAreaColorCalls = 10; //1
 
             const sdk = new SDK(art);
 
@@ -102,45 +102,59 @@
                     _field;
                     _art;
                     _colors;
+                    _pixels = [];
+
+                    #handlerTimeout = [];
+                    #logs = [];
+                    #ptrHandler = 0;
 
                     constructor(field, art, colors) {
                         this._field = field;
                         this._art = art;
                         this._colors = colors;
-                        this.rSize = art.length;
-                        this.cSize = art[0].length;
-                        this._badArt = Array(this.rSize)
+
+                        const rSize = art.length;
+                        const cSize = art[0].length;
+                        this._badArt = Array(rSize)
                             .fill()
-                            .map(() => Array(this.cSize).fill(0));
+                            .map(() => Array(cSize).fill(0));
                     }
 
-                    rectRepaint() {
-                        let count = 0;
-                        while (this.lastBlotch().getArea() > 0) {
-                            const rect = this.lastBlotch().maxPartTest();
+                    rectRepaint(blotch) {
+                        const draftResult = [];
+                        let weight = 1;
+
+                        while (blotch.getArea() > 0) {
+                            const rect = blotch.maxPartTest();
                             for (let i = rect.top; i <= rect.bottom; i++) {
                                 for (let j = rect.left; j <= rect.right; j++) {
                                     this._badArt[i][j] = 2;
                                 }
                             }
-                            // if (rect.area > 1) {
-                            //     sdk.changeAreaColor(
-                            //         rect.left,
-                            //         rect.top,
-                            //         rect.right,
-                            //         rect.bottom,
-                            //         this._colors[rect.color]
-                            //     );
-                            //     // console.log("area", rect);
-                            // } else {
-                            //     sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
-                            //     // console.log("point", rect);
-                            // }
-                            count++;
+                            draftResult.push(rect);
+                            weight *= rect.area;
                         }
 
-                        this.lastBlotch().nestingRect();
-                        console.log(count);
+                        let optimalResult = blotch.nestingRect(draftResult, weight);
+                        console.log(optimalResult);
+                        for (let rect of optimalResult) {
+                            for (let i = rect.top; i <= rect.bottom; i++) {
+                                for (let j = rect.left; j <= rect.right; j++) {
+                                    this._badArt[i][j] = 2;
+                                }
+                            }
+                            if (rect.area > 1) {
+                                sdk.changeAreaColor(
+                                    rect.left,
+                                    rect.top,
+                                    rect.right,
+                                    rect.bottom,
+                                    this._colors[rect.color]
+                                );
+                            } else {
+                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
+                            }
+                        }
                     }
 
                     _getProperty(el) {
@@ -148,28 +162,62 @@
                         return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
                     }
 
-                    addPixel(el) {
+                    savePixel(el) {
                         const { col, row } = this._getProperty(el);
+
                         if (this._badArt[row][col] === 0) {
-                            if (!this.lastBlotch() || !this.lastBlotch().isNeighbor(col, row)) {
-                                this.addBlotch();
+                            this._pixels.push({ col, row });
+
+                            while (this.#ptrHandler < this.#handlerTimeout.length) {
+                                clearTimeout(this.#handlerTimeout[this.#ptrHandler]);
+                                this.#handlerTimeout[this.#ptrHandler] = null;
+                                this.#ptrHandler++;
                             }
 
-                            this.lastBlotch().addPixel(col, row);
-                            this._badArt[row][col] = 1;
+                            this.#handlerTimeout.push(
+                                setTimeout(
+                                    (thisRepainter) => {
+                                        thisRepainter._endAttack();
+                                    },
+                                    2000,
+                                    this
+                                )
+                            );
                         }
                     }
 
-                    addBlotch() {
-                        if (this.lastBlotch()) {
-                            this.rectRepaint();
+                    _endAttack() {
+                        this._pixels.sort((a, b) => a.row - b.row || a.col - b.col);
+
+                        this._pixels.forEach((p) => this._addPixel(p));
+                        this._blotchs.forEach((b) => this.rectRepaint(b));
+                    }
+
+                    _addPixel({ col, row }) {
+                        let isAdded = false;
+
+                        for (let blotch of this._blotchs) {
+                            if (blotch.isNeighbor(col, row)) {
+                                isAdded = true;
+                                blotch.addPixel(col, row);
+                            }
                         }
+
+                        if (!isAdded) {
+                            this._addBlotch();
+                            this._lastBlotch().addPixel(col, row);
+                        }
+
+                        this._badArt[row][col] = 1;
+                    }
+
+                    _addBlotch() {
                         const blotch = new Blotch(this._art, this._badArt);
                         this._blotchs.push(blotch);
                         return blotch;
                     }
 
-                    lastBlotch() {
+                    _lastBlotch() {
                         return this._blotchs.length > 0 ? this._blotchs[this._blotchs.length - 1] : undefined;
                     }
                 }
@@ -181,6 +229,7 @@
                     _badArt;
                     _area;
                     _optimal = [];
+                    _weight = 1;
 
                     constructor(art, badArt) {
                         this._area = 0;
@@ -205,18 +254,11 @@
                     }
 
                     _getCountPixel(top, left, bottom, right, colorCode) {
-                        let iTop = top; //- this._rect.top + 1;
-                        let jLeft = left; //- this._rect.left + 1;
-                        let iBottom = bottom; //- this._rect.bottom + 1;
-                        let jRight = right; //- this._rect.right + 1;
-
-                        console.log(iTop, jLeft, iBottom, jRight);
-
                         return (
-                            this._smearyColors.get(colorCode).prefix[iBottom][jRight] -
-                            this._smearyColors.get(colorCode).prefix[iTop - 1][jRight] -
-                            this._smearyColors.get(colorCode).prefix[iBottom][jLeft - 1] +
-                            this._smearyColors.get(colorCode).prefix[iTop - 1][jLeft - 1]
+                            this._smearyColors.get(colorCode).prefix[bottom][right] -
+                            this._smearyColors.get(colorCode).prefix[top - 1][right] -
+                            this._smearyColors.get(colorCode).prefix[bottom][left - 1] +
+                            this._smearyColors.get(colorCode).prefix[top - 1][left - 1]
                         );
                     }
 
@@ -286,32 +328,34 @@
                     }
 
                     _getNextRect(fromTop, fromLeft, result) {
-                        let existNoVisited = true;
+                        let existNoVisited = false;
 
-                        if (fromLeft > this._rect.right) {
-                            fromTop++;
-                            fromLeft = this._rect.left;
-                            existNoVisited = false;
-                            for (let i = fromTop; i <= this._rect.bottom && !existNoVisited; i++) {
-                                for (let j = fromLeft; j <= this._rect.right && !existNoVisited; j++) {
-                                    if (!result.visited[i - this._rect.top][j - this._rect.left]) {
-                                        existNoVisited = true;
-                                        fromTop = i;
-                                        fromLeft = j;
-                                    }
+                        for (let i = this._rect.top; i <= this._rect.bottom && !existNoVisited; i++) {
+                            for (let j = this._rect.left; j <= this._rect.right && !existNoVisited; j++) {
+                                if (!result.visited[i - this._rect.top][j - this._rect.left]) {
+                                    existNoVisited = true;
+                                    fromTop = i;
+                                    fromLeft = j;
                                 }
                             }
                         }
 
-                        if (!existNoVisited || this.maxCountRect <= result.count) {
-                            if (this.maxCountRect > result.count) {
-                                this._optimal = Array.from(result.stack);
-                            }
+                        const countRect = result.stack.length;
 
+                        if (!existNoVisited || this.maxCountRect <= countRect) {
+                            if (!existNoVisited && this.maxCountRect >= countRect) {
+                                const newWeight = result.stack.reduce((w, v) => w * v.area, 1);
+                                if (
+                                    (this.maxCountRect === countRect && this._weight < newWeight) ||
+                                    this.maxCountRect > countRect
+                                ) {
+                                    this._optimal = Array.from(result.stack);
+                                    this.maxCountRect = countRect;
+                                    this._weight = newWeight;
+                                }
+                            }
                             return;
                         }
-
-                        result.count++;
 
                         let iPrefix = fromTop - this._rect.top + 1;
                         let jPrefix = fromLeft - this._rect.left + 1;
@@ -326,12 +370,18 @@
                                 let width = j - fromLeft + 1;
 
                                 if (
-                                    !result.visited[iPrefix + height - 1][jPrefix + width - 1] &&
-                                    this._getCountPixel(iPrefix, jPrefix, height, width, currentColor) ===
+                                    !result.visited[iPrefix + height - 2][jPrefix + width - 2] &&
+                                    this._getCountPixel(
+                                        iPrefix,
+                                        jPrefix,
+                                        iPrefix + height - 1,
+                                        jPrefix + width - 1,
+                                        currentColor
+                                    ) ===
                                         height * width
                                 ) {
-                                    for (let iV = iPrefix - 1; iV < iPrefix + height; iV++) {
-                                        for (let jV = jPrefix - 1; jV < jPrefix + width; jV++) {
+                                    for (let iV = iPrefix - 1; iV < iPrefix + height - 1; iV++) {
+                                        for (let jV = jPrefix - 1; jV < jPrefix + width - 1; jV++) {
                                             result.visited[iV][jV] = true;
                                         }
                                     }
@@ -341,13 +391,15 @@
                                         left: fromLeft,
                                         bottom: i,
                                         right: j,
+                                        area: height * width,
                                         color: currentColor
                                     });
-
                                     this._getNextRect(fromTop, fromLeft + width, result);
+
                                     result.stack.pop();
-                                    for (let iV = iPrefix - 1; iV < iPrefix + height; iV++) {
-                                        for (let jV = jPrefix - 1; jV < jPrefix + width; jV++) {
+
+                                    for (let iV = iPrefix - 1; iV < iPrefix + height - 1; iV++) {
+                                        for (let jV = jPrefix - 1; jV < jPrefix + width - 1; jV++) {
                                             result.visited[iV][jV] = false;
                                         }
                                     }
@@ -356,15 +408,16 @@
                         }
                     }
 
-                    nestingRect(maxCountRect) {
-                        this.maxCountRect = maxCountRect + 1; //test
+                    nestingRect(optimalResult, weight) {
+                        this._optimal = optimalResult;
+                        this.maxCountRect = optimalResult.length; //test
+                        this._weight = weight;
 
                         const colorCodes = [...this._smearyColors.keys()];
                         const visited = [];
 
                         for (let colorCode of colorCodes) {
                             this._smearyColors.get(colorCode)["prefix"] = [];
-                            // this._smearyColors.get(colorCode).prefix.push([]);
                         }
 
                         for (let i = this._rect.top - 1; i <= this._rect.bottom; i++) {
@@ -392,11 +445,11 @@
                                 }
                             }
                         }
-                        console.log(this._smearyColors);
+
                         const stack = [];
                         this._getNextRect(this._rect.top, this._rect.left, { count: 0, visited, stack });
 
-                        console.log(this._optimal);
+                        return this._optimal;
                     }
 
                     addPixel(col, row) {
@@ -420,19 +473,11 @@
                 }
 
                 const colorRepainter = new Repainter(field, art, colors);
-                let handlerTimeout;
 
                 const callback = (mutationList) => {
                     for (const mutation of mutationList) {
                         if (mutation.type === "attributes") {
-                            colorRepainter.addPixel(mutation.target);
-                            if (handlerTimeout) {
-                                clearTimeout(handlerTimeout);
-                            }
-
-                            handlerTimeout = setTimeout(() => {
-                                colorRepainter.rectRepaint();
-                            }, 2000);
+                            colorRepainter.savePixel(mutation.target);
                         }
                     }
                 };
