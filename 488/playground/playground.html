@@ -141,7 +141,7 @@
 
                     _rectRepaint(blotch) {
                         let optimalResult = blotch.nestingRect(Infinity, 0);
-
+                        console.log(optimalResult);
                         for (let rect of optimalResult) {
                             if (rect.area > 1) {
                                 sdk.changeAreaColor(
@@ -283,8 +283,18 @@
                             for (let j = fromLeft; j <= this._rect.right && isOptimal; j++) {
                                 let width = j - fromLeft + 1;
 
+                                let possableVisit = true;
+
+                                for (let iP = iPrefix - 1; iP <= iPrefix + height - 2 && possableVisit; iP++) {
+                                    for (let jP = jPrefix - 1; jP <= jPrefix + width - 2 && possableVisit; jP++) {
+                                        if (result.visited[iP][jP]) {
+                                            possableVisit = false;
+                                        }
+                                    }
+                                }
+
                                 if (
-                                    !result.visited[iPrefix + height - 2][jPrefix + width - 2] &&
+                                    possableVisit &&
                                     this._getCountPixel(
                                         iPrefix,
                                         jPrefix,
