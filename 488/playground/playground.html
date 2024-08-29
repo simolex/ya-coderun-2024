@@ -103,20 +103,18 @@
                     #handlerTimeout = [];
                     #ptrHandler = 0;
 
-                    _blotchs = [];
+                    #blotchs = [];
 
-                    _field;
-                    _art;
-                    _colors;
+                    #art;
+                    #colors;
 
-                    constructor(field, art, colors) {
-                        this._field = field;
-                        this._art = art;
-                        this._colors = colors;
+                    constructor(art, colors) {
+                        this.#art = art;
+                        this.#colors = colors;
                     }
 
                     savePixel(el) {
-                        const { col, row } = this._getProperty(el);
+                        const { col, row } = this.#getProperty(el);
 
                         if (!this.#isEndAttack) {
                             this.#pixels.push({ col, row });
@@ -130,7 +128,7 @@
                             this.#handlerTimeout.push(
                                 setTimeout(
                                     (thisRepainter) => {
-                                        thisRepainter._endAttack();
+                                        thisRepainter.#endAttack();
                                     },
                                     2000,
                                     this
@@ -139,8 +137,13 @@
                         }
                     }
 
-                    _rectRepaint(blotch) {
-                        let optimalResult = blotch.nestingRect(Infinity, 0);
+                    #getProperty(el) {
+                        const style = getComputedStyle(el);
+                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
+                    }
+
+                    #rectRepaint(blotch) {
+                        let optimalResult = blotch.nestingRect();
 
                         for (let rect of optimalResult) {
                             if (rect.area > 1) {
@@ -149,104 +152,155 @@
                                     rect.top,
                                     rect.right,
                                     rect.bottom,
-                                    this._colors[rect.color]
+                                    this.#colors[rect.color]
                                 );
                             } else {
-                                sdk.changePixelColor(rect.left, rect.top, this._colors[rect.color]);
+                                sdk.changePixelColor(rect.left, rect.top, this.#colors[rect.color]);
                             }
                         }
                     }
 
-                    _addPixel({ col, row }) {
+                    #groupPixelToBlotchs({ col, row }) {
                         let isAdded = false;
 
-                        for (let blotch of this._blotchs) {
-                            if (blotch.isNeighbor(col, row)) {
+                        for (let blotch of this.#blotchs) {
+                            if (blotch.isNeighbor({ col, row })) {
                                 isAdded = true;
-                                blotch.addPixel(col, row);
+                                blotch.addPixel({ col, row });
                             }
                         }
 
                         if (!isAdded) {
-                            this._addBlotch();
-                            this._lastBlotch().addPixel(col, row);
+                            this.#addBlotch();
+                            this.#blotchs[this.#blotchs.length - 1].addPixel({ col, row });
                         }
                     }
 
-                    _endAttack() {
+                    #endAttack() {
                         this.#isEndAttack = true;
                         this.#pixels.sort((a, b) => a.row - b.row || a.col - b.col);
 
-                        this.#pixels.forEach((p) => this._addPixel(p));
-                        this._blotchs.forEach((b) => this._rectRepaint(b));
+                        this.#pixels.forEach((p) => this.#groupPixelToBlotchs(p));
+                        this.#blotchs.forEach((b) => this.#rectRepaint(b));
                     }
 
-                    _getProperty(el) {
-                        const style = getComputedStyle(el);
-                        return { col: +style.getPropertyValue("--col"), row: +style.getPropertyValue("--row") };
-                    }
-
-                    _addBlotch() {
-                        const blotch = new Blotch(this._art, this._badArt);
-                        this._blotchs.push(blotch);
+                    #addBlotch() {
+                        const blotch = new Blotch(this.#art);
+                        this.#blotchs.push(blotch);
                         return blotch;
-                    }
-
-                    _lastBlotch() {
-                        return this._blotchs.length > 0 ? this._blotchs[this._blotchs.length - 1] : undefined;
                     }
                 }
 
                 class Blotch {
-                    _rect = {};
-                    _smearyColors = new Map();
-                    _art;
-                    _badArt;
-                    _area;
-                    _optimal = [];
-                    _weight = 1;
+                    #art;
+                    #rect = {};
+                    #smearyColors = new Map();
+                    #minimalCountRect = Infinity;
+                    #optimalResult = [];
+                    #optimalWeight = 0;
 
-                    constructor(art, badArt) {
-                        this._area = 0;
-                        this._art = art;
-                        this._badArt = badArt;
+                    #stateVisited = [];
+                    #stateStack = [];
+
+                    constructor(art) {
+                        this.#art = art;
                     }
 
-                    _recalcRect(col, row) {
-                        this._rect.left = this._rect.left ? Math.min(this._rect.left, col) : col;
-                        this._rect.right = this._rect.right ? Math.max(this._rect.right, col) : col;
-                        this._rect.top = this._rect.top ? Math.min(this._rect.top, row) : row;
-                        this._rect.bottom = this._rect.bottom ? Math.max(this._rect.bottom, row) : row;
-                    }
+                    addPixel({ col, row }) {
+                        this.#rect.left = this.#rect.left ? Math.min(this.#rect.left, col) : col;
+                        this.#rect.right = this.#rect.right ? Math.max(this.#rect.right, col) : col;
+                        this.#rect.top = this.#rect.top ? Math.min(this.#rect.top, row) : row;
+                        this.#rect.bottom = this.#rect.bottom ? Math.max(this.#rect.bottom, row) : row;
 
-                    _checkColor(col, row) {
-                        const color = this._art[row][col];
+                        const color = this.#getColor({ col, row });
 
-                        if (!this._smearyColors.has(color)) {
-                            this._smearyColors.set(color, { pixels: [] });
+                        if (!this.#smearyColors.has(color)) {
+                            this.#smearyColors.set(color, { pixels: [] });
                         }
-                        this._smearyColors.get(color).pixels.push({ col, row });
+                        this.#smearyColors.get(color).pixels.push({ col, row });
                     }
 
-                    _getCountPixel(top, left, bottom, right, colorCode) {
+                    nestingRect() {
+                        const colorCodes = [...this.#smearyColors.keys()];
+
+                        for (let colorCode of colorCodes) {
+                            this.#smearyColors.get(colorCode)["prefix"] = [];
+                        }
+
+                        for (let i = this.#rect.top - 1; i <= this.#rect.bottom; i++) {
+                            let iPrefix = i - this.#rect.top + 1;
+
+                            for (let colorCode of colorCodes) {
+                                this.#smearyColors.get(colorCode).prefix[iPrefix] = [];
+                            }
+
+                            if (i > 0) this.#stateVisited.push([]);
+
+                            for (let j = this.#rect.left - 1; j <= this.#rect.right; j++) {
+                                let jPrefix = j - this.#rect.left + 1;
+
+                                for (let colorCode of this.#smearyColors.keys()) {
+                                    if (iPrefix !== 0 && jPrefix !== 0) {
+                                        this.#smearyColors.get(colorCode).prefix[iPrefix][jPrefix] =
+                                            this.#smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix] +
+                                            this.#smearyColors.get(colorCode).prefix[iPrefix][jPrefix - 1] -
+                                            this.#smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix - 1] +
+                                            (this.#getColor({ row: i, col: j }) === colorCode ? 1 : 0);
+                                    } else {
+                                        this.#smearyColors.get(colorCode).prefix[iPrefix][jPrefix] = 0;
+                                    }
+                                }
+                            }
+                        }
+                        this.#nextRect();
+
+                        return this.#optimalResult;
+                    }
+
+                    isNeighbor({ col, row }) {
                         return (
-                            this._smearyColors.get(colorCode).prefix[bottom][right] -
-                            this._smearyColors.get(colorCode).prefix[top - 1][right] -
-                            this._smearyColors.get(colorCode).prefix[bottom][left - 1] +
-                            this._smearyColors.get(colorCode).prefix[top - 1][left - 1]
+                            (this.#rect.left <= col &&
+                                this.#rect.right >= col &&
+                                this.#rect.top - 1 <= row &&
+                                this.#rect.bottom + 1 >= row) ||
+                            (this.#rect.left - 1 <= col &&
+                                this.#rect.right + 1 >= col &&
+                                this.#rect.top <= row &&
+                                this.#rect.bottom >= row)
                         );
                     }
 
-                    getArea() {
-                        return this._area;
+                    #getColor({ col, row }) {
+                        return this.#art[row][col];
                     }
 
-                    _getNextRect(fromTop, fromLeft, result) {
-                        let existNoVisited = false;
+                    #countPixelByColor(top, left, bottom, right, colorCode) {
+                        return (
+                            this.#smearyColors.get(colorCode).prefix[bottom][right] -
+                            this.#smearyColors.get(colorCode).prefix[top - 1][right] -
+                            this.#smearyColors.get(colorCode).prefix[bottom][left - 1] +
+                            this.#smearyColors.get(colorCode).prefix[top - 1][left - 1]
+                        );
+                    }
 
-                        for (let i = this._rect.top; i <= this._rect.bottom && !existNoVisited; i++) {
-                            for (let j = this._rect.left; j <= this._rect.right && !existNoVisited; j++) {
-                                if (!result.visited[i - this._rect.top][j - this._rect.left]) {
+                    #markVizitedRect(top, left, bottom, right, marker) {
+                        for (let i = top; i < bottom; i++) {
+                            for (let j = left; j < right; j++) {
+                                this.#stateVisited[i][j] = marker;
+                            }
+                        }
+                    }
+
+                    #nextRect() {
+                        const countRectFinded = this.#stateStack.length;
+
+                        let existNoVisited = false;
+                        let fromTop;
+                        let fromLeft;
+
+                        for (let i = this.#rect.top; i <= this.#rect.bottom && !existNoVisited; i++) {
+                            for (let j = this.#rect.left; j <= this.#rect.right && !existNoVisited; j++) {
+                                if (!this.#stateVisited[i - this.#rect.top][j - this.#rect.left]) {
                                     existNoVisited = true;
                                     fromTop = i;
                                     fromLeft = j;
@@ -254,38 +308,49 @@
                             }
                         }
 
-                        const countRect = result.stack.length;
+                        if (!existNoVisited || this.#minimalCountRect <= countRectFinded) {
+                            if (!existNoVisited && this.#minimalCountRect >= countRectFinded) {
+                                const newWeight = this.#stateStack.reduce((weight, rect) => weight * rect.area, 1);
 
-                        if (!existNoVisited || this.maxCountRect <= countRect) {
-                            if (!existNoVisited && this.maxCountRect >= countRect) {
-                                const newWeight = result.stack.reduce((w, v) => w * v.area, 1);
+                                /**
+                                 * Задача принимается платформой как с максимизацией,
+                                 * так и с минимизацией кол-ва площадных групп пикселей
+                                 * относительно одиночных.
+                                 *
+                                 * this.#optimalWeight < newWeight - максимизирует
+                                 * this.#optimalWeight > newWeight - минимизирует
+                                 *
+                                 * Соответственно, инициализация:
+                                 * #optimalWeight = 0;
+                                 * #optimalWeight = Infinity;
+                                 */
+
                                 if (
-                                    (this.maxCountRect === countRect && this._weight < newWeight) ||
-                                    this.maxCountRect > countRect
+                                    (this.#minimalCountRect === countRectFinded && this.#optimalWeight < newWeight) ||
+                                    this.#minimalCountRect > countRectFinded
                                 ) {
-                                    this._optimal = Array.from(result.stack);
-                                    this.maxCountRect = countRect;
-                                    this._weight = newWeight;
+                                    this.#optimalResult = Array.from(this.#stateStack);
+                                    this.#minimalCountRect = countRectFinded;
+                                    this.#optimalWeight = newWeight;
                                 }
                             }
                             return;
                         }
 
-                        let iPrefix = fromTop - this._rect.top + 1;
-                        let jPrefix = fromLeft - this._rect.left + 1;
+                        let iPrefix = fromTop - this.#rect.top + 1;
+                        let jPrefix = fromLeft - this.#rect.left + 1;
 
-                        const currentColor = this._art[fromTop][fromLeft];
+                        const currentColor = this.#getColor({ row: fromTop, col: fromLeft });
 
-                        let isOptimal = true;
-                        for (let i = fromTop; i <= this._rect.bottom && isOptimal; i++) {
+                        for (let i = fromTop; i <= this.#rect.bottom; i++) {
                             let height = i - fromTop + 1;
 
-                            for (let j = fromLeft; j <= this._rect.right && isOptimal; j++) {
+                            for (let j = fromLeft; j <= this.#rect.right; j++) {
                                 let width = j - fromLeft + 1;
 
                                 if (
-                                    !result.visited[iPrefix + height - 2][jPrefix + width - 2] &&
-                                    this._getCountPixel(
+                                    !this.#stateVisited[iPrefix + height - 2][jPrefix + width - 2] &&
+                                    this.#countPixelByColor(
                                         iPrefix,
                                         jPrefix,
                                         iPrefix + height - 1,
@@ -294,13 +359,15 @@
                                     ) ===
                                         height * width
                                 ) {
-                                    for (let iV = iPrefix - 1; iV < iPrefix + height - 1; iV++) {
-                                        for (let jV = jPrefix - 1; jV < jPrefix + width - 1; jV++) {
-                                            result.visited[iV][jV] = true;
-                                        }
-                                    }
+                                    this.#markVizitedRect(
+                                        iPrefix - 1,
+                                        jPrefix - 1,
+                                        iPrefix + height - 1,
+                                        jPrefix + width - 1,
+                                        true
+                                    );
 
-                                    result.stack.push({
+                                    this.#stateStack.push({
                                         top: fromTop,
                                         left: fromLeft,
                                         bottom: i,
@@ -308,84 +375,25 @@
                                         area: height * width,
                                         color: currentColor
                                     });
-                                    this._getNextRect(fromTop, fromLeft + width, result);
 
-                                    result.stack.pop();
+                                    this.#nextRect();
 
-                                    for (let iV = iPrefix - 1; iV < iPrefix + height - 1; iV++) {
-                                        for (let jV = jPrefix - 1; jV < jPrefix + width - 1; jV++) {
-                                            result.visited[iV][jV] = false;
-                                        }
-                                    }
+                                    this.#stateStack.pop();
+
+                                    this.#markVizitedRect(
+                                        iPrefix - 1,
+                                        jPrefix - 1,
+                                        iPrefix + height - 1,
+                                        jPrefix + width - 1,
+                                        false
+                                    );
                                 }
                             }
                         }
-                    }
-
-                    nestingRect(count, weight) {
-                        this.maxCountRect = count;
-                        this._weight = weight;
-
-                        const colorCodes = [...this._smearyColors.keys()];
-                        const visited = [];
-
-                        for (let colorCode of colorCodes) {
-                            this._smearyColors.get(colorCode)["prefix"] = [];
-                        }
-
-                        for (let i = this._rect.top - 1; i <= this._rect.bottom; i++) {
-                            let iPrefix = i - this._rect.top + 1;
-
-                            for (let colorCode of colorCodes) {
-                                this._smearyColors.get(colorCode).prefix[iPrefix] = [];
-                            }
-
-                            visited.push([]);
-
-                            for (let j = this._rect.left - 1; j <= this._rect.right; j++) {
-                                let jPrefix = j - this._rect.left + 1;
-
-                                for (let colorCode of this._smearyColors.keys()) {
-                                    if (iPrefix !== 0 && jPrefix !== 0) {
-                                        this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix] =
-                                            this._smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix] +
-                                            this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix - 1] -
-                                            this._smearyColors.get(colorCode).prefix[iPrefix - 1][jPrefix - 1] +
-                                            (this._art[i][j] === colorCode ? 1 : 0);
-                                    } else {
-                                        this._smearyColors.get(colorCode).prefix[iPrefix][jPrefix] = 0;
-                                    }
-                                }
-                            }
-                        }
-
-                        const stack = [];
-                        this._getNextRect(this._rect.top, this._rect.left, { count: 0, visited, stack });
-
-                        return this._optimal;
-                    }
-
-                    addPixel(col, row) {
-                        this._area++;
-                        this._recalcRect(col, row);
-                        this._checkColor(col, row);
-                    }
-
-                    isNeighbor(col, row) {
-                        return (
-                            (this._rect.left <= col &&
-                                this._rect.right >= col &&
-                                this._rect.top - 1 <= row &&
-                                this._rect.bottom + 1 >= row) ||
-                            (this._rect.left - 1 <= col &&
-                                this._rect.right + 1 >= col &&
-                                this._rect.top <= row &&
-                                this._rect.bottom >= row)
-                        );
                     }
                 }
 
-                const colorRepainter = new Repainter(field, art, colors);
+                const colorRepainter = new Repainter(art, colors);
 
                 const callback = (mutationList) => {
                     for (const mutation of mutationList) {
