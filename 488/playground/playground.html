@@ -193,17 +193,23 @@
 
                 class Blotch {
                     #art;
-                    #rect = {};
-                    #smearyColors = new Map();
+                    #rect;
+                    #smearyColors;
                     #minimalCountRect = Infinity;
-                    #optimalResult = [];
                     #optimalWeight = 0;
+                    #optimalResult;
 
-                    #stateVisited = [];
-                    #stateStack = [];
+                    #stateVisited;
+                    #stateStack;
 
                     constructor(art) {
                         this.#art = art;
+                        this.#rect = {};
+                        this.#smearyColors = new Map();
+                        this.#optimalResult = [];
+
+                        this.#stateVisited = [];
+                        this.#stateStack = [];
                     }
 
                     addPixel({ col, row }) {
@@ -291,6 +297,17 @@
                         }
                     }
 
+                    #canVisit(top, left, bottom, right) {
+                        for (let i = top; i <= bottom; i++) {
+                            for (let j = left; j <= right; j++) {
+                                if (this.#stateVisited[i][j]) {
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    }
+
                     #nextRect() {
                         const countRectFinded = this.#stateStack.length;
 
@@ -349,7 +366,12 @@
                                 let width = j - fromLeft + 1;
 
                                 if (
-                                    !this.#stateVisited[iPrefix + height - 2][jPrefix + width - 2] &&
+                                    this.#canVisit(
+                                        iPrefix - 1,
+                                        jPrefix - 1,
+                                        iPrefix + height - 2,
+                                        jPrefix + width - 2
+                                    ) &&
                                     this.#countPixelByColor(
                                         iPrefix,
                                         jPrefix,
